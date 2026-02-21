@@ -1,0 +1,32 @@
+<Window x:Class="CRM.Desktop.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="ISP CRM Analyzer" Height="540" Width="980">
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+            <Button Content="Sync Now" Width="120" Margin="0,0,8,0" Command="{Binding RunSyncCommand}" />
+            <Button Content="60+ Gün Raporu" Width="140" Margin="0,0,8,0" Command="{Binding LoadExpiredReportCommand}" />
+            <Button Content="CSV Export" Width="120" Command="{Binding ExportCsvCommand}" />
+        </StackPanel>
+
+        <DataGrid Grid.Row="1" ItemsSource="{Binding ExpiredRows}" AutoGenerateColumns="False" IsReadOnly="True">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Müşteri ID" Binding="{Binding CustomerId}" Width="120" />
+                <DataGridTextColumn Header="Ad Soyad" Binding="{Binding CustomerName}" Width="180" />
+                <DataGridTextColumn Header="Paket" Binding="{Binding PlanCode}" Width="130" />
+                <DataGridTextColumn Header="Bitiş" Binding="{Binding EndDate, StringFormat=yyyy-MM-dd}" Width="100" />
+                <DataGridTextColumn Header="Geçen Gün" Binding="{Binding DaysExpired}" Width="90" />
+                <DataGridTextColumn Header="İlçe" Binding="{Binding District}" Width="120" />
+                <DataGridTextColumn Header="Durum" Binding="{Binding Status}" Width="90" />
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <TextBlock Grid.Row="2" Text="{Binding StatusText}" Margin="0,10,0,0" FontWeight="SemiBold" />
+    </Grid>
+</Window>

@@ -22,6 +22,12 @@ export default [
     },
   },
   {
-    ignores: ['**/*.spec.ts', 'prisma.config.ts', 'prisma/**/*.ts'],
+    ignores: [
+      '**/*.spec.ts',
+      'prisma.config.ts',
+      'prisma/**/*.ts',
+      'prisma/migrations/**',
+      'prisma/seed/**',
+    ],
   },
 ];

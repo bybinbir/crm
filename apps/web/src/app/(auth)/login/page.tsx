@@ -37,24 +37,26 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Email
+              E-posta veya kullanıcı adı
             </label>
             <input
-              type="email"
+              type="text"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="admin"
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
               required
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Password
+              Şifre
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              placeholder="admin"
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
               required
             />
@@ -65,7 +67,7 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
           >
-            {loading ? 'Signing in...' : 'Sign in'}
+            {loading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
           </button>
         </form>
       </div>

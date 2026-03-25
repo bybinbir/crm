@@ -18,7 +18,8 @@ export class AuthService {
   ) {}
 
   /**
-   * Login user with email and password
+   * Login user with email/username and password
+   * Supports demo login: admin/admin
    */
   async login(
     loginDto: LoginDto,
@@ -27,16 +28,19 @@ export class AuthService {
   ): Promise<AuthResponseDto> {
     const { email, password } = loginDto;
 
+    // Demo credential mapping: 'admin' username -> SUPER_ADMIN email
+    const identifier = email === 'admin' ? 'admin@bullvar.com' : email;
+
     // Find user
     const user = await this.prisma.user.findUnique({
-      where: { email },
+      where: { email: identifier },
     });
 
     if (!user || !user.isActive) {
       // Log failed login attempt
       await this.auditService.log({
         action: AuditAction.LOGIN_FAILED,
-        metadata: { email, reason: 'User not found or inactive' },
+        metadata: { email: identifier, reason: 'User not found or inactive' },
         ipAddress,
         userAgent,
       });
@@ -52,7 +56,7 @@ export class AuthService {
       await this.auditService.log({
         userId: user.id,
         action: AuditAction.LOGIN_FAILED,
-        metadata: { email, reason: 'Invalid password' },
+        metadata: { email: identifier, reason: 'Invalid password' },
         ipAddress,
         userAgent,
       });
@@ -82,7 +86,7 @@ export class AuthService {
     await this.auditService.log({
       userId: user.id,
       action: AuditAction.LOGIN_SUCCESS,
-      metadata: { email },
+      metadata: { email: identifier },
       ipAddress,
       userAgent,
     });
@@ -184,10 +188,12 @@ export class AuthService {
     ipAddress?: string,
     userAgent?: string
   ): Promise<string> {
+    // eslint-disable-next-line no-undef
     const expiresInStr = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
     const refreshToken = this.jwtService.sign(
       { sub: userId, type: 'refresh' },
       {
+        // eslint-disable-next-line no-undef
         secret: process.env.JWT_REFRESH_SECRET || 'development-refresh-secret',
         expiresIn: expiresInStr as
           | `${number}ms`
@@ -199,6 +205,7 @@ export class AuthService {
     );
 
     // Calculate expiration
+    // eslint-disable-next-line no-undef
     const expiresIn = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
     const expiresAt = new Date();
 

@@ -1,10 +1,10 @@
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import { IsString, MinLength } from 'class-validator';
 
 export class LoginDto {
-  @IsEmail()
-  email!: string;
+  @IsString()
+  email!: string; // Actually email or username, kept field name for backward compatibility
 
   @IsString()
-  @MinLength(8)
+  @MinLength(4) // Relaxed from 8 to allow 'admin' demo password
   password!: string;
 }

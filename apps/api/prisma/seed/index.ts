@@ -32,8 +32,7 @@ async function main() {
     data: {
       email: adminEmail,
       passwordHash,
-      firstName: 'System',
-      lastName: 'Administrator',
+      name: 'System Administrator',
       role: Role.SUPER_ADMIN,
       isActive: true,
     },

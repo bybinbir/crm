@@ -1,6 +1,16 @@
+'use client';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { Button } from '@crmanaliz/ui';
 
 export default function HomePage() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    setIsAuthenticated(!!token);
+  }, []);
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-24">
       <div className="flex flex-col items-center gap-8 max-w-2xl text-center">
@@ -11,12 +21,16 @@ export default function HomePage() {
           ISSmanager CRM Analytics & Decision Support Platform
         </p>
         <div className="flex gap-4 mt-4">
-          <Button variant="primary" size="lg">
-            Dashboard
-          </Button>
-          <Button variant="secondary" size="lg">
-            Entegrasyonlar
-          </Button>
+          <Link href={isAuthenticated ? '/dashboard' : '/login'}>
+            <Button variant="primary" size="lg">
+              Dashboard
+            </Button>
+          </Link>
+          <Link href={isAuthenticated ? '/dashboard/integrations' : '/login'}>
+            <Button variant="secondary" size="lg">
+              Entegrasyonlar
+            </Button>
+          </Link>
         </div>
         <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
           <div className="p-6 border rounded-lg">

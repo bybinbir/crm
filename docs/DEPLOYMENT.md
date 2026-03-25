@@ -8,7 +8,7 @@
 - Minimum 2GB RAM, 2 CPU cores
 - 20GB disk space
 - Root or sudo access
-- Domain: analiz.bullvar.com pointed to server IP
+- Domain: analiz.binbirnet.com.tr pointed to server IP
 
 ### Required Software
 
@@ -109,10 +109,10 @@ DEFAULT_ADMIN_EMAIL=admin@crmanaliz.local
 DEFAULT_ADMIN_PASSWORD=<strong-password>
 
 # URLs
-APP_URL=https://analiz.bullvar.com
-API_URL=https://analiz.bullvar.com
-CORS_ORIGIN=https://analiz.bullvar.com
-NEXT_PUBLIC_API_URL=https://analiz.bullvar.com
+APP_URL=https://analiz.binbirnet.com.tr
+API_URL=https://analiz.binbirnet.com.tr
+CORS_ORIGIN=https://analiz.binbirnet.com.tr
+NEXT_PUBLIC_API_URL=https://analiz.binbirnet.com.tr
 ```
 
 ### 4. Secure Environment File
@@ -127,15 +127,15 @@ chmod 600 .env
 
 ```bash
 # Stop any service using ports 80/443
-sudo certbot certonly --standalone -d analiz.bullvar.com
+sudo certbot certonly --standalone -d analiz.binbirnet.com.tr
 ```
 
 ### 2. Copy Certificates
 
 ```bash
 sudo mkdir -p /opt/crm-analiz/app/ssl
-sudo cp /etc/letsencrypt/live/analiz.bullvar.com/fullchain.pem /opt/crm-analiz/app/ssl/
-sudo cp /etc/letsencrypt/live/analiz.bullvar.com/privkey.pem /opt/crm-analiz/app/ssl/
+sudo cp /etc/letsencrypt/live/analiz.binbirnet.com.tr/fullchain.pem /opt/crm-analiz/app/ssl/
+sudo cp /etc/letsencrypt/live/analiz.binbirnet.com.tr/privkey.pem /opt/crm-analiz/app/ssl/
 sudo chown -R $USER:$USER /opt/crm-analiz/app/ssl
 ```
 
@@ -145,8 +145,8 @@ sudo chown -R $USER:$USER /opt/crm-analiz/app/ssl
 # Add renewal hook
 sudo bash -c 'cat > /etc/letsencrypt/renewal-hooks/post/crm-analiz.sh << EOF
 #!/bin/bash
-cp /etc/letsencrypt/live/analiz.bullvar.com/fullchain.pem /opt/crm-analiz/app/ssl/
-cp /etc/letsencrypt/live/analiz.bullvar.com/privkey.pem /opt/crm-analiz/app/ssl/
+cp /etc/letsencrypt/live/analiz.binbirnet.com.tr/fullchain.pem /opt/crm-analiz/app/ssl/
+cp /etc/letsencrypt/live/analiz.binbirnet.com.tr/privkey.pem /opt/crm-analiz/app/ssl/
 docker compose -f /opt/crm-analiz/app/compose.prod.yaml exec nginx nginx -s reload
 EOF'
 sudo chmod +x /etc/letsencrypt/renewal-hooks/post/crm-analiz.sh
@@ -194,7 +194,7 @@ Web: ✅
 
 ### 1. First Login
 
-Navigate to: https://analiz.bullvar.com/login
+Navigate to: https://analiz.binbirnet.com.tr/login
 
 Credentials:
 
@@ -278,7 +278,7 @@ gunzip -c $BACKUP_FILE | docker compose -f compose.prod.yaml exec -T postgres ps
 
 ```bash
 # API health
-curl https://analiz.bullvar.com/api/v1/health
+curl https://analiz.binbirnet.com.tr/api/v1/health
 
 # Expected: {"status":"ok","timestamp":"...","version":"...","uptime":...}
 ```
@@ -331,7 +331,7 @@ sudo certbot certificates
 sudo certbot renew
 
 # Copy renewed certs
-sudo cp /etc/letsencrypt/live/analiz.bullvar.com/*.pem /opt/crm-analiz/app/ssl/
+sudo cp /etc/letsencrypt/live/analiz.binbirnet.com.tr/*.pem /opt/crm-analiz/app/ssl/
 docker compose -f compose.prod.yaml restart nginx
 ```
 

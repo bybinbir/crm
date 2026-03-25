@@ -8,10 +8,15 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { Request } from 'express';
+
+import {
+  CurrentUser,
+  CurrentUserData,
+} from '../../common/decorators/current-user.decorator';
+import { Public } from '../../common/decorators/public.decorator';
+
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
-import { Public } from '../../common/decorators/public.decorator';
-import { CurrentUser, CurrentUserData } from '../../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Controller('api/v1/auth')
@@ -33,7 +38,7 @@ export class AuthController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async logout(
     @CurrentUser() user: CurrentUserData,
-    @Body('refreshToken') refreshToken: string,
+    @Body('refreshToken') refreshToken: string
   ) {
     await this.authService.logout(user.id, refreshToken);
   }

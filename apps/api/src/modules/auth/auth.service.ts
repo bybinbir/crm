@@ -1,22 +1,20 @@
-import {
-  Injectable,
-  UnauthorizedException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from '../../common/prisma/prisma.service';
-import { AuditService } from '../audit/audit.service';
-import { verifyPassword, hashPassword } from '../../common/utils/encryption.util';
-import { LoginDto } from './dto/login.dto';
-import { AuthResponseDto } from './dto/auth-response.dto';
 import { AuditAction } from '@prisma/client';
+
+import { PrismaService } from '../../common/prisma/prisma.service';
+import { verifyPassword } from '../../common/utils/encryption.util';
+import { AuditService } from '../audit/audit.service';
+
+import { AuthResponseDto } from './dto/auth-response.dto';
+import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
-    private readonly auditService: AuditService,
+    private readonly auditService: AuditService
   ) {}
 
   /**
@@ -25,7 +23,7 @@ export class AuthService {
   async login(
     loginDto: LoginDto,
     ipAddress?: string,
-    userAgent?: string,
+    userAgent?: string
   ): Promise<AuthResponseDto> {
     const { email, password } = loginDto;
 
@@ -63,11 +61,15 @@ export class AuthService {
     }
 
     // Generate tokens
-    const accessToken = this.generateAccessToken(user.id, user.email, user.role);
+    const accessToken = this.generateAccessToken(
+      user.id,
+      user.email,
+      user.role
+    );
     const refreshToken = await this.generateRefreshToken(
       user.id,
       ipAddress,
-      userAgent,
+      userAgent
     );
 
     // Update last login
@@ -147,7 +149,7 @@ export class AuthService {
     const accessToken = this.generateAccessToken(
       session.user.id,
       session.user.email,
-      session.user.role,
+      session.user.role
     );
 
     return {
@@ -168,7 +170,7 @@ export class AuthService {
   private generateAccessToken(
     userId: string,
     email: string,
-    role: string,
+    role: string
   ): string {
     const payload = { sub: userId, email, role };
     return this.jwtService.sign(payload);
@@ -180,15 +182,20 @@ export class AuthService {
   private async generateRefreshToken(
     userId: string,
     ipAddress?: string,
-    userAgent?: string,
+    userAgent?: string
   ): Promise<string> {
     const expiresInStr = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
     const refreshToken = this.jwtService.sign(
       { sub: userId, type: 'refresh' },
       {
         secret: process.env.JWT_REFRESH_SECRET || 'development-refresh-secret',
-        expiresIn: expiresInStr as `${number}ms` | `${number}s` | `${number}m` | `${number}h` | `${number}d`,
-      },
+        expiresIn: expiresInStr as
+          | `${number}ms`
+          | `${number}s`
+          | `${number}m`
+          | `${number}h`
+          | `${number}d`,
+      }
     );
 
     // Calculate expiration

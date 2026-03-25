@@ -1,5 +1,4 @@
 import { IsString, IsUrl, IsInt, Min, IsOptional } from 'class-validator';
-import { IntegrationProvider } from '@prisma/client';
 
 export class CreateIntegrationConfigDto {
   @IsString()

@@ -4,15 +4,17 @@
  */
 
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../../../common/prisma/prisma.service';
-import { ISSManagerClient } from './issmanager.client';
-import { decrypt } from '../../../common/utils/encryption.util';
-import { ISSManagerConnectionTestResult } from './issmanager.types';
 import {
   IntegrationProvider,
   IntegrationStatus,
   SyncStatus,
 } from '@prisma/client';
+
+import { PrismaService } from '../../../common/prisma/prisma.service';
+import { decrypt } from '../../../common/utils/encryption.util';
+
+import { ISSManagerClient } from './issmanager.client';
+import { ISSManagerConnectionTestResult } from './issmanager.types';
 
 @Injectable()
 export class ISSManagerService {
@@ -52,7 +54,7 @@ export class ISSManagerService {
    * Test connection to ISSmanager
    */
   async testConnection(
-    configId: string,
+    configId: string
   ): Promise<ISSManagerConnectionTestResult> {
     const client = await this.getClient(configId);
     const result = await client.testConnection();
@@ -77,7 +79,7 @@ export class ISSManagerService {
    * Start a sync run
    * This is a skeleton - will be expanded in future phases
    */
-  async startSync(configId: string, userId: string): Promise<string> {
+  async startSync(configId: string, _userId: string): Promise<string> {
     // Create sync run record
     const syncRun = await this.prisma.integrationSyncRun.create({
       data: {

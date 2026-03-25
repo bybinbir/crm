@@ -16,11 +16,14 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await api.post('/api/v1/auth/login', { email, password });
+      const response = await api.post('/api/v1/auth/login', {
+        email,
+        password,
+      });
       localStorage.setItem('accessToken', response.data.accessToken);
       localStorage.setItem('refreshToken', response.data.refreshToken);
       router.push('/dashboard');
-    } catch (err: unknown) {
+    } catch {
       setError('Invalid credentials');
     } finally {
       setLoading(false);
@@ -33,7 +36,9 @@ export default function LoginPage() {
         <h2 className="text-3xl font-bold text-center">CRM Analiz</h2>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Email</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Email
+            </label>
             <input
               type="email"
               value={email}
@@ -43,7 +48,9 @@ export default function LoginPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Password</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Password
+            </label>
             <input
               type="password"
               value={password}

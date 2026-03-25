@@ -11,28 +11,27 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { Role } from '@prisma/client';
 import { Request } from 'express';
-import { IntegrationsService } from './integrations.service';
-import { ISSManagerService } from './issmanager/issmanager.service';
-import {
-  CreateIntegrationConfigDto,
-  UpdateIntegrationConfigDto,
-} from './dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../../common/decorators/roles.decorator';
+
 import {
   CurrentUser,
   CurrentUserData,
 } from '../../common/decorators/current-user.decorator';
-import { Role } from '@prisma/client';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+
+import { CreateIntegrationConfigDto, UpdateIntegrationConfigDto } from './dto';
+import { IntegrationsService } from './integrations.service';
+import { ISSManagerService } from './issmanager/issmanager.service';
 
 @Controller('api/v1/admin/integrations')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class IntegrationsController {
   constructor(
     private readonly integrationsService: IntegrationsService,
-    private readonly issmanagerService: ISSManagerService,
+    private readonly issmanagerService: ISSManagerService
   ) {}
 
   /**
@@ -44,13 +43,13 @@ export class IntegrationsController {
   async create(
     @CurrentUser() user: CurrentUserData,
     @Body() dto: CreateIntegrationConfigDto,
-    @Req() req: Request,
+    @Req() req: Request
   ) {
     return this.integrationsService.create(
       user.id,
       dto,
       req.ip,
-      req.headers['user-agent'],
+      req.headers['user-agent']
     );
   }
 
@@ -81,14 +80,14 @@ export class IntegrationsController {
     @CurrentUser() user: CurrentUserData,
     @Param('id') id: string,
     @Body() dto: UpdateIntegrationConfigDto,
-    @Req() req: Request,
+    @Req() req: Request
   ) {
     return this.integrationsService.update(
       user.id,
       id,
       dto,
       req.ip,
-      req.headers['user-agent'],
+      req.headers['user-agent']
     );
   }
 
@@ -101,13 +100,13 @@ export class IntegrationsController {
   async delete(
     @CurrentUser() user: CurrentUserData,
     @Param('id') id: string,
-    @Req() req: Request,
+    @Req() req: Request
   ) {
     await this.integrationsService.delete(
       user.id,
       id,
       req.ip,
-      req.headers['user-agent'],
+      req.headers['user-agent']
     );
   }
 
@@ -129,7 +128,7 @@ export class IntegrationsController {
   @HttpCode(HttpStatus.ACCEPTED)
   async startSync(
     @CurrentUser() user: CurrentUserData,
-    @Param('id') id: string,
+    @Param('id') id: string
   ) {
     const syncRunId = await this.issmanagerService.startSync(id, user.id);
     return { syncRunId };

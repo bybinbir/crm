@@ -8,7 +8,6 @@ import * as crypto from 'crypto';
 
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 16;
-const AUTH_TAG_LENGTH = 16;
 const SALT_LENGTH = 64;
 
 /**
@@ -20,7 +19,7 @@ function getEncryptionKey(): Buffer {
 
   if (!key) {
     throw new Error(
-      'ENCRYPTION_KEY environment variable is not set. This is required for encrypting sensitive data.',
+      'ENCRYPTION_KEY environment variable is not set. This is required for encrypting sensitive data.'
     );
   }
 

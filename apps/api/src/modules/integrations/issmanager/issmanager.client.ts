@@ -4,8 +4,10 @@
  * Includes retry logic, timeout, and error normalization
  */
 
-import axios, { AxiosInstance, AxiosError } from 'axios';
-import {
+import type { AxiosInstance, AxiosError } from 'axios';
+import axios from 'axios';
+
+import type {
   ISSManagerConfig,
   ISSManagerConnectionTestResult,
   ISSManagerApiError,
@@ -32,7 +34,7 @@ export class ISSManagerClient {
       (response) => response,
       (error: AxiosError) => {
         return Promise.reject(this.normalizeError(error));
-      },
+      }
     );
   }
 
@@ -164,7 +166,8 @@ export class ISSManagerClient {
       // Request was made but no response received
       return {
         code: 'NO_RESPONSE',
-        message: 'No response from ISSmanager server. Please check connectivity.',
+        message:
+          'No response from ISSmanager server. Please check connectivity.',
         details: { timeout: this.config.timeoutMs },
       };
     } else {

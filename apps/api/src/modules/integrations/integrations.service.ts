@@ -4,28 +4,27 @@
  */
 
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../common/prisma/prisma.service';
-import { AuditService } from '../audit/audit.service';
-import {
-  encrypt,
-  decrypt,
-  maskSecret,
-} from '../../common/utils/encryption.util';
-import {
-  CreateIntegrationConfigDto,
-  UpdateIntegrationConfigDto,
-} from './dto';
 import {
   IntegrationProvider,
   IntegrationStatus,
   AuditAction,
 } from '@prisma/client';
 
+import { PrismaService } from '../../common/prisma/prisma.service';
+import {
+  encrypt,
+  decrypt,
+  maskSecret,
+} from '../../common/utils/encryption.util';
+import { AuditService } from '../audit/audit.service';
+
+import { CreateIntegrationConfigDto, UpdateIntegrationConfigDto } from './dto';
+
 @Injectable()
 export class IntegrationsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly auditService: AuditService,
+    private readonly auditService: AuditService
   ) {}
 
   /**
@@ -35,7 +34,7 @@ export class IntegrationsService {
     userId: string,
     dto: CreateIntegrationConfigDto,
     ipAddress?: string,
-    userAgent?: string,
+    userAgent?: string
   ) {
     // Encrypt API key
     const apiKeyEncrypted = encrypt(dto.apiKey);
@@ -80,7 +79,7 @@ export class IntegrationsService {
     configId: string,
     dto: UpdateIntegrationConfigDto,
     ipAddress?: string,
-    userAgent?: string,
+    userAgent?: string
   ) {
     const existing = await this.prisma.integrationConfig.findUnique({
       where: { id: configId },
@@ -176,7 +175,7 @@ export class IntegrationsService {
     userId: string,
     configId: string,
     ipAddress?: string,
-    userAgent?: string,
+    userAgent?: string
   ) {
     const existing = await this.prisma.integrationConfig.findUnique({
       where: { id: configId },

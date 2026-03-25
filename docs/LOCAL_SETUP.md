@@ -1,5 +1,23 @@
 # Local Development Setup
 
+## ⚠️ CRITICAL REQUIREMENT
+
+**Docker Desktop (or equivalent) MUST be installed and running to use this application.**
+
+Without Docker/PostgreSQL/Redis:
+
+- ❌ Cannot run migrations
+- ❌ Cannot seed database
+- ❌ Cannot start API server (DATABASE_URL required)
+- ❌ Cannot test login flow
+- ❌ Cannot verify any UI functionality
+
+**If Docker is not available:** Install Docker Desktop for your platform:
+
+- Windows: https://docs.docker.com/desktop/install/windows-install/
+- Mac: https://docs.docker.com/desktop/install/mac-install/
+- Linux: https://docs.docker.com/engine/install/
+
 ## Prerequisites
 
 - Node.js >=20.0.0

@@ -26,10 +26,17 @@
     "@changesets/cli": "^2.27.11",
     "@commitlint/cli": "^19.6.2",
     "@commitlint/config-conventional": "^19.6.0",
+    "@eslint/js": "^9.18.0",
+    "@typescript-eslint/eslint-plugin": "^8.19.1",
+    "@typescript-eslint/parser": "^8.19.1",
+    "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-import": "^2.31.0",
+    "globals": "^15.14.0",
     "husky": "^9.1.7",
     "lint-staged": "^15.3.0",
     "prettier": "^3.4.2",
-    "turbo": "^2.3.5"
+    "turbo": "^2.3.5",
+    "typescript": "^5.7.3"
   }
 }

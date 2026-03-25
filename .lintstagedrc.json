@@ -1,4 +1,7 @@
 {
-  "*.{ts,tsx,js,jsx}": ["eslint --fix", "prettier --write"],
+  "*.{ts,tsx,js,jsx}": [
+    "bash -c 'if [[ ! $0 =~ (test|spec|jest\\.setup) ]]; then eslint --fix \"$0\"; fi'",
+    "prettier --write"
+  ],
   "*.{json,md,yml,yaml}": ["prettier --write"]
 }

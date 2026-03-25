@@ -1,5 +1,6 @@
-import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
+
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -26,6 +27,7 @@ async function bootstrap() {
   const port = process.env.PORT ?? 4000;
   await app.listen(port);
 
+  // eslint-disable-next-line no-console
   console.log(`🚀 API running on: http://localhost:${port}/api/v1`);
 }
 

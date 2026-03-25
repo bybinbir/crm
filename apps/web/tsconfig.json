@@ -1,0 +1,14 @@
+{
+  "extends": "@crmanaliz/config/tsconfig.nextjs.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"],
+      "@crmanaliz/types": ["../../packages/types/src"],
+      "@crmanaliz/ui": ["../../packages/ui/src"]
+    },
+    "allowJs": true,
+    "noEmit": true
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}

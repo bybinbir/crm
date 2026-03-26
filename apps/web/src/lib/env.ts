@@ -25,7 +25,6 @@ export function validateEnv(): void {
   // Only warn about localhost in production, don't block build
   // This allows local production builds for testing
   if (env.isProduction && env.apiUrl?.includes('localhost')) {
-    // eslint-disable-next-line no-console
     console.warn(
       '⚠️  WARNING: NEXT_PUBLIC_API_URL contains "localhost" in production build. ' +
         'This is OK for local testing, but DO NOT deploy to production with this configuration.'

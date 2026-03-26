@@ -248,7 +248,7 @@ sudo ss -tulpn | grep -E ':(80|443|3000|4000)'
 # 3. Test health endpoint
 curl -k https://analiz.binbirnet.com.tr/api/v1/health
 
-# Expected response: {"status":"ok","timestamp":"..."}
+# Expected response: {"status":"ok","timestamp":"...","version":"0.1.0","uptime":...}
 
 # 4. Test login page
 curl -I https://analiz.binbirnet.com.tr/login
@@ -337,8 +337,9 @@ pnpm prisma migrate deploy
 sudo systemctl restart crmanaliz-api
 sudo systemctl restart crmanaliz-web
 
-# Verify
+# Verify health endpoint
 curl https://analiz.binbirnet.com.tr/api/v1/health
+# Expected: {"status":"ok","timestamp":"...","version":"0.1.0","uptime":...}
 ```
 
 ## 12. Rollback Procedure

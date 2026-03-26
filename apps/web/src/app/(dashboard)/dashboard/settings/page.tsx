@@ -6,7 +6,7 @@ export default function SettingsPage() {
   const [emailReports, setEmailReports] = useState(false);
   const [autoSync, setAutoSync] = useState(true);
 
-  const handleSave = () => {
+  const _handleSave = () => {
     // TODO: Save settings via API
   };
 

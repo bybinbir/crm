@@ -12,8 +12,10 @@ async function main() {
   console.log('🌱 Starting database seed...');
 
   // Get credentials from environment or use defaults
-  const adminEmail = process.env.DEFAULT_ADMIN_EMAIL || 'admin@crmanaliz.local';
-  const adminPassword = process.env.DEFAULT_ADMIN_PASSWORD || 'Admin123!';
+  // IMPORTANT: admin@bullvar.com is the canonical admin email
+  // The 'admin' username is an alias that maps to this email in auth service
+  const adminEmail = process.env.DEFAULT_ADMIN_EMAIL || 'admin@bullvar.com';
+  const adminPassword = process.env.DEFAULT_ADMIN_PASSWORD || 'admin';
 
   // Check if admin already exists
   const existingAdmin = await prisma.user.findUnique({
@@ -22,6 +24,8 @@ async function main() {
 
   if (existingAdmin) {
     console.log(`✅ Admin user already exists: ${adminEmail}`);
+    console.log(`ℹ️  You can login with: admin@bullvar.com / admin`);
+    console.log(`ℹ️  Or use the username shortcut: admin / admin`);
     return;
   }
 
@@ -41,6 +45,10 @@ async function main() {
   console.log(`✅ Created admin user: ${adminUser.email}`);
   console.log(`📧 Email: ${adminEmail}`);
   console.log(`🔑 Password: ${adminPassword}`);
+  console.log('');
+  console.log('✨ Login options:');
+  console.log('   1. Email: admin@bullvar.com / Password: admin');
+  console.log('   2. Username shortcut: admin / Password: admin');
   console.log('');
   console.log('⚠️  IMPORTANT: Change this password immediately in production!');
 

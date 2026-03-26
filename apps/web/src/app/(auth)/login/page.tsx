@@ -28,7 +28,7 @@ export default function LoginPage() {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
-          errorData.message || `HTTP ${response.status}: ${response.statusText}`
+          errorData.message || 'Geçersiz kullanıcı adı veya şifre'
         );
       }
 
@@ -39,7 +39,7 @@ export default function LoginPage() {
       router.refresh(); // Refresh to pick up new auth state
     } catch (err: any) {
       console.error('Login error:', err);
-      setError(err.message || 'An error occurred during login');
+      setError(err.message || 'Giriş yapılırken bir hata oluştu');
     } finally {
       setLoading(false);
     }
@@ -61,17 +61,17 @@ export default function LoginPage() {
               htmlFor="email"
               className="block text-sm font-medium text-gray-700"
             >
-              E-posta
+              E-posta veya Kullanıcı Adı
             </label>
             <input
               id="email"
               type="text"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@bullvar.com"
+              placeholder="admin@bullvar.com veya admin"
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               required
-              autoComplete="email"
+              autoComplete="username"
             />
           </div>
 
@@ -139,8 +139,23 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="mt-4 text-center">
-          <p className="text-xs text-gray-500">Test için: admin@bullvar.com</p>
+        <div className="mt-4 text-center space-y-2">
+          <p className="text-xs text-gray-500">
+            <strong>Demo Giriş Bilgileri:</strong>
+          </p>
+          <p className="text-xs text-gray-600">
+            E-posta:{' '}
+            <code className="bg-gray-100 px-2 py-1 rounded">
+              admin@bullvar.com
+            </code>
+          </p>
+          <p className="text-xs text-gray-600">
+            Kullanıcı adı:{' '}
+            <code className="bg-gray-100 px-2 py-1 rounded">admin</code>
+          </p>
+          <p className="text-xs text-gray-600">
+            Şifre: <code className="bg-gray-100 px-2 py-1 rounded">admin</code>
+          </p>
         </div>
       </div>
     </div>

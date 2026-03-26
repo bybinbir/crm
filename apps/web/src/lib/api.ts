@@ -1,9 +1,12 @@
 import axios from 'axios';
 
 const api = axios.create({
-  // Browser: use relative paths (same-origin, nginx proxies /api to backend)
-  // Server (SSR): use internal API URL
-  baseURL: typeof window !== 'undefined' ? '' : 'http://localhost:3000',
+  // Browser: use relative paths (Next.js rewrites in dev, nginx in prod)
+  // Server (SSR): use direct backend URL
+  baseURL:
+    typeof window !== 'undefined'
+      ? '' // Browser: same-origin requests
+      : process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000', // SSR: direct backend
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true, // Include cookies in all requests
 });

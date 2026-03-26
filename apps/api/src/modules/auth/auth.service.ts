@@ -188,12 +188,10 @@ export class AuthService {
     ipAddress?: string,
     userAgent?: string
   ): Promise<string> {
-    // eslint-disable-next-line no-undef
     const expiresInStr = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
     const refreshToken = this.jwtService.sign(
       { sub: userId, type: 'refresh' },
       {
-        // eslint-disable-next-line no-undef
         secret: process.env.JWT_REFRESH_SECRET || 'development-refresh-secret',
         expiresIn: expiresInStr as
           | `${number}ms`
@@ -205,7 +203,7 @@ export class AuthService {
     );
 
     // Calculate expiration
-    // eslint-disable-next-line no-undef
+
     const expiresIn = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
     const expiresAt = new Date();
 

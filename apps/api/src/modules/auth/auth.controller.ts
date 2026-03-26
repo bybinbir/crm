@@ -4,10 +4,12 @@ import {
   Body,
   UseGuards,
   Req,
+  Res,
   HttpCode,
   HttpStatus,
+  UnauthorizedException,
 } from '@nestjs/common';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 
 import {
   CurrentUser,
@@ -26,11 +28,38 @@ export class AuthController {
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body() loginDto: LoginDto, @Req() req: Request) {
+  async login(
+    @Body() loginDto: LoginDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response
+  ) {
     const ipAddress = req.ip;
     const userAgent = req.headers['user-agent'];
 
-    return this.authService.login(loginDto, ipAddress, userAgent);
+    const result = await this.authService.login(loginDto, ipAddress, userAgent);
+
+    // Set HttpOnly cookies for security
+    const isProduction = process.env.NODE_ENV === 'production';
+    const cookieOptions = {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax' as const,
+      path: '/',
+    };
+
+    // Access token: 15 minutes
+    res.cookie('accessToken', result.accessToken, {
+      ...cookieOptions,
+      maxAge: 15 * 60 * 1000,
+    });
+
+    // Refresh token: 7 days
+    res.cookie('refreshToken', result.refreshToken, {
+      ...cookieOptions,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return result;
   }
 
   @UseGuards(JwtAuthGuard)
@@ -38,16 +67,46 @@ export class AuthController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async logout(
     @CurrentUser() user: CurrentUserData,
-    @Body('refreshToken') refreshToken: string
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response
   ) {
-    await this.authService.logout(user.id, refreshToken);
+    const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
+
+    if (refreshToken) {
+      await this.authService.logout(user.id, refreshToken);
+    }
+
+    // Clear cookies
+    res.clearCookie('accessToken', { path: '/' });
+    res.clearCookie('refreshToken', { path: '/' });
   }
 
   @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  async refresh(@Body('refreshToken') refreshToken: string) {
-    return this.authService.refreshAccessToken(refreshToken);
+  async refresh(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response
+  ) {
+    const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
+
+    if (!refreshToken) {
+      throw new UnauthorizedException('Refresh token not provided');
+    }
+
+    const result = await this.authService.refreshAccessToken(refreshToken);
+
+    // Update access token cookie
+    const isProduction = process.env.NODE_ENV === 'production';
+    res.cookie('accessToken', result.accessToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax' as const,
+      path: '/',
+      maxAge: 15 * 60 * 1000,
+    });
+
+    return result;
   }
 
   @UseGuards(JwtAuthGuard)

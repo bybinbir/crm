@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CRM Analiz - Login Test</title>
+    <style>
+        body { font-family: sans-serif; max-width: 500px; margin: 50px auto; padding: 20px; }
+        input, button { width: 100%; padding: 10px; margin: 10px 0; }
+        button { background: #2563eb; color: white; border: none; cursor: pointer; }
+        .error { background: #fee; border: 1px solid #fcc; padding: 10px; color: #c00; }
+        .success { background: #efe; border: 1px solid #cfc; padding: 10px; color: #060; }
+    </style>
+</head>
+<body>
+    <h1>CRM Analiz - Direct API Login Test</h1>
+    <form id="loginForm">
+        <input type="text" id="email" placeholder="Email" value="admin@bullvar.com">
+        <input type="password" id="password" placeholder="Password" value="9s7WT2hB0XBDEHz7POVf2BKbpJVx">
+        <button type="submit">Test Login</button>
+    </form>
+    <div id="result"></div>
+    
+    <script>
+        document.getElementById('loginForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const result = document.getElementById('result');
+            result.innerHTML = 'Testing...';
+            
+            try {
+                const response = await fetch('/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: document.getElementById('email').value,
+                        password: document.getElementById('password').value
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    result.className = 'success';
+                    result.innerHTML = '<strong>SUCCESS!</strong><br>' + 
+                                      'Token: ' + data.accessToken.substring(0, 50) + '...<br>' +
+                                      'User: ' + data.user.email + '<br>' +
+                                      'Role: ' + data.user.role;
+                    localStorage.setItem('accessToken', data.accessToken);
+                    setTimeout(() => window.location.href = '/dashboard', 2000);
+                } else {
+                    result.className = 'error';
+                    result.innerHTML = '<strong>FAILED</strong><br>' + 
+                                      'Status: ' + response.status + '<br>' +
+                                      'Message: ' + (data.message || 'Unknown error');
+                }
+            } catch (err) {
+                result.className = 'error';
+                result.innerHTML = '<strong>ERROR</strong><br>' + err.message;
+            }
+        };
+    </script>
+</body>
+</html>

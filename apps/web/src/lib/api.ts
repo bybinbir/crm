@@ -5,15 +5,10 @@ const api = axios.create({
   // Server (SSR): use internal API URL
   baseURL: typeof window !== 'undefined' ? '' : 'http://localhost:3000',
   headers: { 'Content-Type': 'application/json' },
+  withCredentials: true, // Include cookies in all requests
 });
 
-api.interceptors.request.use((config) => {
-  if (typeof window !== 'undefined') {
-    // eslint-disable-next-line no-undef
-    const token = localStorage.getItem('accessToken');
-    if (token) config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+// Cookie-based auth: no need for manual token management
+// Backend JWT strategy extracts token from HttpOnly cookies
 
 export default api;

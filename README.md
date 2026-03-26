@@ -144,6 +144,7 @@ Detaylı bilgi için: [docs/STACK.md](docs/STACK.md)
 - [SECURITY.md](docs/SECURITY.md) - Güvenlik kuralları
 - [ENVIRONMENT.md](docs/ENVIRONMENT.md) - Ortam kurulumu
 - [DECISIONS.md](docs/DECISIONS.md) - Mimari kararlar (ADR)
+- [DEPLOYMENT.md](deployment/DEPLOYMENT.md) - Production deployment rehberi
 - [CLAUDE.md](CLAUDE.md) - Proje anayasası
 - [task_dash.md](task_dash.md) - Görev panosu
 
@@ -229,6 +230,24 @@ Internal Development Team
 
 Sorularınız için: dev@crmanaliz.local
 
+## 🚀 Production Deployment
+
+Production sunucuya deployment için:
+
+```bash
+# Nginx konfigürasyonu
+sudo cp deployment/nginx/crmanaliz.conf /etc/nginx/sites-available/
+sudo ln -s /etc/nginx/sites-available/crmanaliz.conf /etc/nginx/sites-enabled/
+
+# SSL sertifikası
+sudo certbot --nginx -d analiz.binbirnet.com.tr
+
+# Smoke test
+./deployment/smoke-test.sh https://analiz.binbirnet.com.tr
+```
+
+Detaylı rehber: [deployment/DEPLOYMENT.md](deployment/DEPLOYMENT.md)
+
 ---
 
-**Not:** Bu proje aktif geliştirme aşamasındadır. Production kullanımı için henüz hazır değildir.
+**Not:** Production deployment için güvenlik hardening tamamlandı.

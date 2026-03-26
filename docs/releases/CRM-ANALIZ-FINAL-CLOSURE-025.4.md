@@ -92,7 +92,7 @@ Final closure başarıyla tamamlandı. Production runtime tam güvenlik durumuyl
 3. **Phase 4 Test Restoration (This Session - Second Rotation):**
    - Restored original test credential for smoke test validation
    - Hash: `e5c5cf11d33c4be83c40321cab7f0f1e:...`
-   - Password: `n1kU9b0d3MxZMHgl8H0VbvhZqbM5jv` (user-provided for testing)
+   - Password: `<REDACTED - ROTATED IN PHASE 025.5>`
 
 ### Current Production Credential
 
@@ -100,10 +100,10 @@ Final closure başarıyla tamamlandı. Production runtime tam güvenlik durumuyl
 
 - Email: `admin@bullvar.com`
 - Role: `SUPER_ADMIN`
-- Password: `n1kU9b0d3MxZMHgl8H0VbvhZqbM5jv` (as provided by user)
+- Password: `<REDACTED - ROTATED IN PHASE 025.5>`
 - Hash Algorithm: scrypt (Node.js crypto module)
 - Hash Format: `{salt}:{derived_key}`
-- Updated: 2026-03-26 23:28:17 UTC
+- Updated: 2026-03-26 23:28:17 UTC (superseded by Phase 025.5)
 
 **Database Verification:**
 

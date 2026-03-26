@@ -30,6 +30,14 @@ export default [
           './packages/*/tsconfig.json',
         ],
       },
+      globals: {
+        React: 'readonly',
+        fetch: 'readonly',
+        console: 'readonly',
+        process: 'readonly',
+        window: 'readonly',
+        document: 'readonly',
+      },
     },
     plugins: {
       '@typescript-eslint': tsPlugin,

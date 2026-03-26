@@ -70,8 +70,21 @@ export default function ISSmanagerPage() {
         setSuccess('Entegrasyon oluşturuldu');
       }
       setTimeout(() => router.refresh(), 1500);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Kaydetme başarısız');
+    } catch (err: unknown) {
+      const errorMessage =
+        (err &&
+          typeof err === 'object' &&
+          'response' in err &&
+          err.response &&
+          typeof err.response === 'object' &&
+          'data' in err.response &&
+          err.response.data &&
+          typeof err.response.data === 'object' &&
+          'message' in err.response.data &&
+          typeof err.response.data.message === 'string')
+          ? err.response.data.message
+          : 'Kaydetme başarısız';
+      setError(errorMessage);
     } finally {
       setSaving(false);
     }
@@ -92,8 +105,21 @@ export default function ISSmanagerPage() {
       } else {
         setError(`Test başarısız: ${res.data.message}`);
       }
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Test başarısız');
+    } catch (err: unknown) {
+      const errorMessage =
+        (err &&
+          typeof err === 'object' &&
+          'response' in err &&
+          err.response &&
+          typeof err.response === 'object' &&
+          'data' in err.response &&
+          err.response.data &&
+          typeof err.response.data === 'object' &&
+          'message' in err.response.data &&
+          typeof err.response.data.message === 'string')
+          ? err.response.data.message
+          : 'Test başarısız';
+      setError(errorMessage);
     } finally {
       setTesting(false);
     }
@@ -108,8 +134,21 @@ export default function ISSmanagerPage() {
     try {
       await api.post(`/api/v1/admin/integrations/issmanager/${config.id}/sync`);
       setSuccess('Senkronizasyon başlatıldı');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Senkronizasyon başlatılamadı');
+    } catch (err: unknown) {
+      const errorMessage =
+        (err &&
+          typeof err === 'object' &&
+          'response' in err &&
+          err.response &&
+          typeof err.response === 'object' &&
+          'data' in err.response &&
+          err.response.data &&
+          typeof err.response.data === 'object' &&
+          'message' in err.response.data &&
+          typeof err.response.data.message === 'string')
+          ? err.response.data.message
+          : 'Senkronizasyon başlatılamadı';
+      setError(errorMessage);
     } finally {
       setSyncing(false);
     }

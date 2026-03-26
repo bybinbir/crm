@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
@@ -37,9 +37,10 @@ export default function LoginPage() {
 
       router.push('/dashboard');
       router.refresh(); // Refresh to pick up new auth state
-    } catch (err: any) {
-      console.error('Login error:', err);
-      setError(err.message || 'Giriş yapılırken bir hata oluştu');
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Giriş yapılırken bir hata oluştu';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

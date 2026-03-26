@@ -1,10 +1,11 @@
 'use client';
 import Link from 'next/link';
+import type { Route } from 'next';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, type ReactNode } from 'react';
 import { useAuth } from '@/lib/auth';
 
-const navigation: Array<{ name: string; href: string; icon: string }> = [
+const navigation: Array<{ name: string; href: Route; icon: string }> = [
   { name: 'Genel Bakış', href: '/dashboard', icon: '📊' },
   { name: 'Entegrasyonlar', href: '/dashboard/integrations', icon: '🔗' },
   { name: 'Mahalle Kalite', href: '/dashboard/neighborhoods', icon: '🏘️' },
@@ -71,7 +72,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               return (
                 <Link
                   key={item.name}
-                  href={item.href as any}
+                  href={item.href}
                   className={`
                     flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition
                     ${

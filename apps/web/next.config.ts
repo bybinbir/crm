@@ -5,16 +5,18 @@ const nextConfig: NextConfig = {
   transpilePackages: ['@crmanaliz/ui', '@crmanaliz/types'],
   typedRoutes: true,
 
-  // Development: Proxy /api requests to NestJS backend (port 4000)
+  // Development: Proxy /api requests to NestJS backend
   // Production: nginx handles this
   async rewrites() {
+    const isDevelopment = process.env.NODE_ENV === 'development'; // eslint-disable-line no-undef
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'; // eslint-disable-line no-undef
+
     // Only add rewrite in development
-    // eslint-disable-next-line no-undef
-    if (process.env.NODE_ENV === 'development') {
+    if (isDevelopment) {
       return [
         {
           source: '/api/:path*',
-          destination: 'http://localhost:4000/api/:path*',
+          destination: `${apiUrl}/api/:path*`,
         },
       ];
     }

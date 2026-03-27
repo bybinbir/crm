@@ -7,8 +7,12 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import type { Express } from 'express';
 
-import { CurrentUser, CurrentUserData } from '../../common/decorators/current-user.decorator';
+import {
+  CurrentUser,
+  CurrentUserData,
+} from '../../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 import { UploadResponseDto } from './dto/import.dto';
@@ -23,7 +27,7 @@ export class ImportsController {
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(
     @UploadedFile() file: Express.Multer.File,
-    @CurrentUser() user: CurrentUserData,
+    @CurrentUser() user: CurrentUserData
   ): Promise<UploadResponseDto> {
     if (!file) {
       throw new BadRequestException('No file uploaded');
@@ -36,7 +40,7 @@ export class ImportsController {
     ];
     if (!allowedMimeTypes.includes(file.mimetype)) {
       throw new BadRequestException(
-        'Invalid file type. Only CSV files are accepted.',
+        'Invalid file type. Only CSV files are accepted.'
       );
     }
 
@@ -50,7 +54,7 @@ export class ImportsController {
       file.originalname,
       file.size,
       file.mimetype,
-      user.id,
+      user.id
     );
 
     return result;

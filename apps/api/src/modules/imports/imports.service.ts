@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../common/prisma/prisma.service';
 import type {
   ImportBatch,
   ImportJob,
@@ -7,7 +6,11 @@ import type {
   ImportStatus,
   ImportEntityType,
   ImportSourceType,
+  Prisma,
 } from '@prisma/client';
+
+import { PrismaService } from '../../common/prisma/prisma.service';
+
 import type { CreateImportBatchDto } from './dto/import.dto';
 
 @Injectable()
@@ -52,7 +55,7 @@ export class ImportsService {
     limit?: number;
     offset?: number;
   }): Promise<{ batches: ImportBatch[]; total: number }> {
-    const where: any = {};
+    const where: Prisma.ImportBatchWhereInput = {};
 
     if (filters?.status) where.status = filters.status;
     if (filters?.entityType) where.entityType = filters.entityType;
@@ -123,7 +126,7 @@ export class ImportsService {
       data: rows.map((row) => ({
         batchId,
         rowNumber: row.rowNumber,
-        rawData: row.rawData as any,
+        rawData: row.rawData as Prisma.InputJsonValue,
         status: 'PENDING' as ImportStatus,
       })),
     });
@@ -137,7 +140,7 @@ export class ImportsService {
       offset?: number;
     }
   ): Promise<{ jobs: ImportJob[]; total: number }> {
-    const where: any = { batchId };
+    const where: Prisma.ImportJobWhereInput = { batchId };
     if (filters?.status) where.status = filters.status;
 
     const [jobs, total] = await Promise.all([
@@ -167,7 +170,9 @@ export class ImportsService {
       where: { id },
       data: {
         ...data,
-        normalizedData: data.normalizedData as any,
+        normalizedData: data.normalizedData as
+          | Prisma.InputJsonValue
+          | undefined,
         processedAt: new Date(),
       },
     });
@@ -185,7 +190,7 @@ export class ImportsService {
     return this.prisma.importError.create({
       data: {
         ...data,
-        errorDetails: data.errorDetails as any,
+        errorDetails: data.errorDetails as Prisma.InputJsonValue | undefined,
       },
     });
   }
@@ -198,7 +203,7 @@ export class ImportsService {
       offset?: number;
     }
   ): Promise<{ errors: ImportError[]; total: number }> {
-    const where: any = { batchId };
+    const where: Prisma.ImportErrorWhereInput = { batchId };
     if (filters?.errorType) where.errorType = filters.errorType;
 
     const [errors, total] = await Promise.all([

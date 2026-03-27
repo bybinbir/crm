@@ -4,6 +4,7 @@
  */
 
 import { parse } from 'csv-parse/sync';
+
 import type { ImportPreviewDto } from '../dto/import.dto';
 
 export interface ParseOptions {
@@ -40,7 +41,7 @@ export class CsvParser {
 
     try {
       content = buffer.toString(encoding);
-    } catch (error) {
+    } catch {
       // Try alternative encodings
       try {
         content = buffer.toString('latin1');

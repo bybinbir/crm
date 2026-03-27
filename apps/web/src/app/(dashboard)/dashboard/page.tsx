@@ -2,32 +2,41 @@
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 
-interface DashboardStats {
-  connectionStatus: string;
-  lastTest: string | null;
-  lastSync: string | null;
+interface DashboardMetrics {
+  totalCustomers: number;
+  totalNeighborhoods: number;
+  importSuccessRate: number;
+  latestImport?: {
+    batchId: string;
+    fileName: string;
+    importedRows: number;
+    failedRows: number;
+    status: string;
+    importedAt: string;
+  };
+  dataSourceStatus: {
+    type: string;
+    description: string;
+    lastSync?: string;
+  };
 }
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     api
-      .get('/api/v1/admin/integrations')
+      .get('/api/v1/dashboard/metrics')
       .then((res) => {
-        const configs = Array.isArray(res.data) ? res.data : [];
-        const config = configs[0];
-        setStats({
-          connectionStatus: config?.status || 'PENDING',
-          lastTest: config?.lastTestAt || null,
-          lastSync: config?.lastSyncAt || null,
-        });
+        setMetrics(res.data);
         setLoading(false);
       })
       .catch((err) => {
-        setError(err.response?.data?.message || 'Veri yüklenirken hata oluştu');
+        setError(
+          err.response?.data?.message || 'Metrikler yüklenirken hata oluştu'
+        );
         setLoading(false);
       });
   }, []);
@@ -58,34 +67,121 @@ export default function DashboardPage() {
     );
   }
 
+  if (!metrics) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+          <p className="text-sm text-yellow-700">Veri bulunamadı</p>
+        </div>
+      </div>
+    );
+  }
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'Henüz veri yok';
+    return new Date(dateString).toLocaleString('tr-TR');
+  };
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card
-          title="ISSmanager Status"
-          value={stats?.connectionStatus || 'Yapılandırılmadı'}
-        />
-        <Card
-          title="Son Test"
-          value={
-            stats?.lastTest
-              ? new Date(stats.lastTest).toLocaleString('tr-TR')
-              : 'Henüz test edilmedi'
-          }
-        />
-        <Card
-          title="Son Senkronizasyon"
-          value={
-            stats?.lastSync
-              ? new Date(stats.lastSync).toLocaleString('tr-TR')
-              : 'Henüz senkronize edilmedi'
-          }
-        />
-        <Card title="Sistem Sağlığı" value="Sağlıklı" />
-        <Card title="Denetim Olayları" value="Aktif" />
-        <Card title="Mahalle Kalite" value="Henüz veri yok" />
+
+      {/* Data Source Status */}
+      <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
+        <div className="flex">
+          <div className="ml-3">
+            <p className="text-sm text-blue-700">
+              <strong>Veri Kaynağı:</strong>{' '}
+              {metrics.dataSourceStatus.description}
+            </p>
+            {metrics.dataSourceStatus.lastSync && (
+              <p className="text-sm text-blue-600 mt-1">
+                Son senkronizasyon:{' '}
+                {formatDate(metrics.dataSourceStatus.lastSync)}
+              </p>
+            )}
+          </div>
+        </div>
       </div>
+
+      {/* Main Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card
+          title="Toplam Müşteri"
+          value={metrics.totalCustomers.toString()}
+        />
+        <Card
+          title="Toplam Mahalle"
+          value={metrics.totalNeighborhoods.toString()}
+        />
+        <Card
+          title="Import Başarı Oranı"
+          value={`${metrics.importSuccessRate.toFixed(0)}%`}
+        />
+        {metrics.latestImport && (
+          <Card
+            title="Son Import"
+            value={`${metrics.latestImport.importedRows} kayıt`}
+          />
+        )}
+      </div>
+
+      {/* Latest Import Details */}
+      {metrics.latestImport && (
+        <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+          <div className="px-4 py-5 sm:px-6">
+            <h3 className="text-lg leading-6 font-medium text-gray-900">
+              Son Import Detayları
+            </h3>
+            <p className="mt-1 max-w-2xl text-sm text-gray-500">
+              {metrics.latestImport.fileName}
+            </p>
+          </div>
+          <div className="border-t border-gray-200 px-4 py-5 sm:p-0">
+            <dl className="sm:divide-y sm:divide-gray-200">
+              <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt className="text-sm font-medium text-gray-500">Durum</dt>
+                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                  <span
+                    className={`px-2 py-1 rounded text-xs font-medium ${
+                      metrics.latestImport.status === 'COMPLETED'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-yellow-100 text-yellow-800'
+                    }`}
+                  >
+                    {metrics.latestImport.status}
+                  </span>
+                </dd>
+              </div>
+              <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt className="text-sm font-medium text-gray-500">
+                  Başarılı Kayıtlar
+                </dt>
+                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                  {metrics.latestImport.importedRows}
+                </dd>
+              </div>
+              <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt className="text-sm font-medium text-gray-500">
+                  Başarısız Kayıtlar
+                </dt>
+                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                  {metrics.latestImport.failedRows}
+                </dd>
+              </div>
+              <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt className="text-sm font-medium text-gray-500">
+                  Import Tarihi
+                </dt>
+                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                  {formatDate(metrics.latestImport.importedAt)}
+                </dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

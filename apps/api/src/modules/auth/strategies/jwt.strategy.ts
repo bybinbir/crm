@@ -20,22 +20,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       ignoreExpiration: false,
       secretOrKey: secret,
     });
-
-    console.log('[JWT] Strategy initialized');
-    console.log(
-      '[JWT] Secret source:',
-      process.env.JWT_ACCESS_SECRET ? 'ENV' : 'DEFAULT'
-    );
-    console.log('[JWT] Extractor: Bearer header only');
   }
 
   async validate(payload: JwtPayload) {
-    console.log('[JWT] ✓ validate() CALLED');
-    console.log('[JWT] Payload keys:', Object.keys(payload));
-    console.log('[JWT] Payload.sub:', payload.sub);
-    console.log('[JWT] Payload.email:', payload.email);
-    console.log('[JWT] Payload.role:', payload.role);
-
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
       select: {
@@ -47,17 +34,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       },
     });
 
-    console.log(
-      '[JWT] User lookup:',
-      user ? `FOUND (${user.email})` : 'NOT FOUND'
-    );
-
     if (!user || !user.isActive) {
-      console.log('[JWT] ✗ Rejecting: User not found or inactive');
       throw new UnauthorizedException('User not found or inactive');
     }
 
-    console.log('[JWT] ✓ Returning user object');
     return user;
   }
 }

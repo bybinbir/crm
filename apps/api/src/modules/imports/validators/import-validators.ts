@@ -94,7 +94,7 @@ export class CustomerImportValidator {
 
   static isValidPhone(phone: string): boolean {
     // Turkish phone format or international format
-    return /^[\d\s\-\+\(\)]{7,20}$/.test(phone);
+    return /^[\d\s\-+()]{7,20}$/.test(phone);
   }
 
   /**
@@ -298,8 +298,8 @@ export class DuplicateDetector {
    * (To be implemented with actual database check)
    */
   static async checkExisting(
-    entityType: string,
-    externalIds: string[]
+    _entityType: string,
+    _externalIds: string[]
   ): Promise<Map<string, boolean>> {
     // Placeholder - will be implemented with Prisma
     return new Map();

@@ -5,12 +5,14 @@ import {
   UploadedFile,
   BadRequestException,
   UseGuards,
-  Request,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+
+import { CurrentUser, CurrentUserData } from '../../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { ImportProcessorService } from './services/import-processor.service';
+
 import { UploadResponseDto } from './dto/import.dto';
+import { ImportProcessorService } from './services/import-processor.service';
 
 @Controller('imports')
 @UseGuards(JwtAuthGuard)
@@ -21,8 +23,7 @@ export class ImportsController {
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(
     @UploadedFile() file: Express.Multer.File,
-    @Request() req: any
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    @CurrentUser() user: CurrentUserData,
   ): Promise<UploadResponseDto> {
     if (!file) {
       throw new BadRequestException('No file uploaded');
@@ -35,7 +36,7 @@ export class ImportsController {
     ];
     if (!allowedMimeTypes.includes(file.mimetype)) {
       throw new BadRequestException(
-        'Invalid file type. Only CSV files are accepted.'
+        'Invalid file type. Only CSV files are accepted.',
       );
     }
 
@@ -44,14 +45,12 @@ export class ImportsController {
       throw new BadRequestException('File too large. Maximum size is 10MB.');
     }
 
-    const userId = req.user.userId;
-
     const result = await this.processorService.processCustomerCsvImport(
       file.buffer,
       file.originalname,
       file.size,
       file.mimetype,
-      userId
+      user.id,
     );
 
     return result;

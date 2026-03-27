@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '@/common/prisma/prisma.service';
+import { PrismaService } from '../../common/prisma/prisma.service';
 import type {
   ImportBatch,
   ImportJob,
@@ -10,17 +10,10 @@ import type {
 } from '@prisma/client';
 import type { CreateImportBatchDto } from './dto/import.dto';
 
-/**
- * Imports Service
- * Handles CSV/Excel import operations and batch tracking
- */
 @Injectable()
 export class ImportsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  /**
-   * Create a new import batch
-   */
   async createBatch(
     dto: CreateImportBatchDto,
     createdByUserId: string
@@ -37,9 +30,6 @@ export class ImportsService {
     });
   }
 
-  /**
-   * Get import batch by ID
-   */
   async getBatchById(id: string): Promise<ImportBatch | null> {
     return this.prisma.importBatch.findUnique({
       where: { id },
@@ -55,9 +45,6 @@ export class ImportsService {
     });
   }
 
-  /**
-   * List import batches
-   */
   async listBatches(filters?: {
     status?: ImportStatus;
     entityType?: ImportEntityType;
@@ -93,9 +80,6 @@ export class ImportsService {
     return { batches, total };
   }
 
-  /**
-   * Update batch status
-   */
   async updateBatchStatus(
     id: string,
     status: ImportStatus,
@@ -116,9 +100,6 @@ export class ImportsService {
     });
   }
 
-  /**
-   * Update batch statistics
-   */
   async updateBatchStats(
     id: string,
     stats: {
@@ -134,9 +115,6 @@ export class ImportsService {
     });
   }
 
-  /**
-   * Create import jobs for a batch
-   */
   async createJobs(
     batchId: string,
     rows: { rowNumber: number; rawData: Record<string, unknown> }[]
@@ -145,15 +123,12 @@ export class ImportsService {
       data: rows.map((row) => ({
         batchId,
         rowNumber: row.rowNumber,
-        rawData: row.rawData,
-        status: 'PENDING',
+        rawData: row.rawData as any,
+        status: 'PENDING' as ImportStatus,
       })),
     });
   }
 
-  /**
-   * Get jobs for a batch
-   */
   async getJobsByBatchId(
     batchId: string,
     filters?: {
@@ -178,9 +153,6 @@ export class ImportsService {
     return { jobs, total };
   }
 
-  /**
-   * Update import job
-   */
   async updateJob(
     id: string,
     data: {
@@ -195,14 +167,12 @@ export class ImportsService {
       where: { id },
       data: {
         ...data,
+        normalizedData: data.normalizedData as any,
         processedAt: new Date(),
       },
     });
   }
 
-  /**
-   * Create import error
-   */
   async createError(data: {
     batchId: string;
     rowNumber?: number;
@@ -213,13 +183,13 @@ export class ImportsService {
     fieldValue?: string;
   }): Promise<ImportError> {
     return this.prisma.importError.create({
-      data,
+      data: {
+        ...data,
+        errorDetails: data.errorDetails as any,
+      },
     });
   }
 
-  /**
-   * Get errors for a batch
-   */
   async getErrorsByBatchId(
     batchId: string,
     filters?: {
@@ -244,9 +214,6 @@ export class ImportsService {
     return { errors, total };
   }
 
-  /**
-   * Delete import batch (and cascade delete jobs/errors)
-   */
   async deleteBatch(id: string): Promise<void> {
     await this.prisma.importBatch.delete({
       where: { id },

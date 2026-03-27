@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '@/common/prisma/prisma.service';
+import { PrismaService } from '../../../common/prisma/prisma.service';
 import { ImportsService } from '../imports.service';
 import { CsvParser } from '../parsers/csv-parser';
 import { CustomerImportValidator } from '../validators/import-validators';
@@ -102,7 +102,7 @@ export class ImportProcessorService {
                   field: error.field,
                   value: error.value,
                   rule: error.rule,
-                },
+                } as any,
                 fieldName: error.field,
                 fieldValue: String(error.value),
               });
@@ -137,7 +137,7 @@ export class ImportProcessorService {
                 errorDetails: {
                   field: warning.field,
                   value: warning.value,
-                },
+                } as any,
                 fieldName: warning.field,
                 fieldValue: String(warning.value),
               });
@@ -190,7 +190,7 @@ export class ImportProcessorService {
               neighborhoodId,
               sourceType: 'CSV_UPLOAD',
               sourceBatchId: batch.id,
-              sourceData: row.rawData,
+              sourceData: row.rawData as any,
               snapshotAt: new Date(),
             },
           });
@@ -218,8 +218,8 @@ export class ImportProcessorService {
               error instanceof Error ? error.message : 'Unknown error',
             errorDetails: {
               error: String(error),
-            },
-          });
+            } as any,
+          } as any);
 
           // Update job status to failed
           const { jobs } = await this.importsService.getJobsByBatchId(batch.id);

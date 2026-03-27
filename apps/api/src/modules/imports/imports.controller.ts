@@ -12,7 +12,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ImportProcessorService } from './services/import-processor.service';
 import { UploadResponseDto } from './dto/import.dto';
 
-@Controller('api/v1/imports')
+@Controller('imports')
 @UseGuards(JwtAuthGuard)
 export class ImportsController {
   constructor(private readonly processorService: ImportProcessorService) {}
@@ -22,6 +22,7 @@ export class ImportsController {
   async uploadFile(
     @UploadedFile() file: Express.Multer.File,
     @Request() req: any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ): Promise<UploadResponseDto> {
     if (!file) {
       throw new BadRequestException('No file uploaded');

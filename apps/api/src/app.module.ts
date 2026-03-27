@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
 import { validate } from './common/config/env.validation';
-import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { AuditModule } from './modules/audit/audit.module';
 import { CustomersModule } from './modules/customers/customers.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { HealthModule } from './modules/health/health.module';
@@ -18,8 +18,8 @@ import { NeighborhoodsModule } from './modules/neighborhoods/neighborhoods.modul
       envFilePath: ['.env.local', '.env'],
       validate,
     }),
-    HealthModule,
     AuthModule,
+    HealthModule,
     IntegrationsModule,
     AuditModule,
     ImportsModule,

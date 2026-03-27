@@ -69,7 +69,7 @@ export default function LoginPage() {
               type="text"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@test.com veya admin"
+              placeholder="admin"
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               required
               autoComplete="username"
@@ -145,10 +145,8 @@ export default function LoginPage() {
             <strong>Test Giriş Bilgileri:</strong>
           </p>
           <p className="text-xs text-gray-600">
-            E-posta:{' '}
-            <code className="bg-gray-100 px-2 py-1 rounded">
-              admin@test.com
-            </code>
+            Kullanıcı Adı:{' '}
+            <code className="bg-gray-100 px-2 py-1 rounded">admin</code>
           </p>
           <p className="text-xs text-gray-600">
             Şifre: <code className="bg-gray-100 px-2 py-1 rounded">admin</code>

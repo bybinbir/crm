@@ -29,7 +29,7 @@ export class AuthService {
     const { email, password } = loginDto;
 
     // Demo credential mapping: 'admin' username -> SUPER_ADMIN email
-    const identifier = email === 'admin' ? 'admin@bullvar.com' : email;
+    const identifier = email === 'admin' ? 'admin@admin.com' : email;
 
     // Find user
     const user = await this.prisma.user.findUnique({

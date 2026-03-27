@@ -9,7 +9,7 @@ import type { ImportPreviewDto } from '../dto/import.dto';
 
 export interface ParseOptions {
   delimiter?: string;
-  encoding?: BufferEncoding;
+  encoding?: 'utf8' | 'utf-8' | 'ascii' | 'latin1' | 'base64' | 'hex';
   skipEmptyLines?: boolean;
   trim?: boolean;
   maxRows?: number;

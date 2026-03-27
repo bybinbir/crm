@@ -78,3 +78,9 @@ secrets/
 *.secret
 credentials.*
 !credentials.example.*
+
+# Debug and verification scripts
+scripts/debug-*.js
+scripts/verify-*.js
+scripts/verify-*.ts
+scripts/fix-*.js

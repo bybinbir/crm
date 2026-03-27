@@ -3,9 +3,15 @@ import { NestFactory } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
 
 import { AppModule } from './app.module';
+import { PrismaService } from './common/prisma/prisma.service';
+import { seedAdminUser } from './common/utils/seed-admin.util';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Seed admin user on bootstrap
+  const prisma = app.get(PrismaService);
+  await seedAdminUser(prisma);
 
   // Cookie parser middleware
   app.use(cookieParser());

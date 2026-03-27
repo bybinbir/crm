@@ -21,22 +21,23 @@ enum Role {
 }
 
 model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
-  passwordHash String    @map("password_hash")
+  id           String  @id @default(cuid())
+  email        String  @unique
+  passwordHash String  @map("password_hash")
   name         String?
-  role         Role      @default(ANALYST)
-  isActive     Boolean   @default(true) @map("is_active")
+  role         Role    @default(ANALYST)
+  isActive     Boolean @default(true) @map("is_active")
 
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
-  lastLoginAt  DateTime? @map("last_login_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  lastLoginAt DateTime? @map("last_login_at")
 
   // Relations
-  sessions            UserSession[]
-  auditLogs           AuditLog[]
-  createdIntegrations IntegrationConfig[] @relation("CreatedIntegrations")
-  updatedIntegrations IntegrationConfig[] @relation("UpdatedIntegrations")
+  sessions             UserSession[]
+  auditLogs            AuditLog[]
+  createdIntegrations  IntegrationConfig[] @relation("CreatedIntegrations")
+  updatedIntegrations  IntegrationConfig[] @relation("UpdatedIntegrations")
+  createdImportBatches ImportBatch[]       @relation("CreatedImportBatches")
 
   @@map("users")
 }
@@ -49,7 +50,7 @@ model UserSession {
   ipAddress    String?  @map("ip_address")
   expiresAt    DateTime @map("expires_at")
 
-  createdAt    DateTime @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -90,7 +91,7 @@ model AuditLog {
   ipAddress  String?     @map("ip_address")
   userAgent  String?     @map("user_agent")
 
-  createdAt  DateTime    @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
   // Relations
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
@@ -127,19 +128,19 @@ model IntegrationConfig {
   isEnabled       Boolean             @default(true) @map("is_enabled")
   status          IntegrationStatus   @default(PENDING)
 
-  lastTestAt      DateTime?           @map("last_test_at")
-  lastTestStatus  String?             @map("last_test_status")
-  lastTestMessage String?             @map("last_test_message")
-  lastSyncAt      DateTime?           @map("last_sync_at")
+  lastTestAt      DateTime? @map("last_test_at")
+  lastTestStatus  String?   @map("last_test_status")
+  lastTestMessage String?   @map("last_test_message")
+  lastSyncAt      DateTime? @map("last_sync_at")
 
-  createdAt       DateTime            @default(now()) @map("created_at")
-  updatedAt       DateTime            @updatedAt @map("updated_at")
-  createdById     String              @map("created_by_id")
-  updatedById     String?             @map("updated_by_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdById String   @map("created_by_id")
+  updatedById String?  @map("updated_by_id")
 
   // Relations
-  createdBy User                @relation("CreatedIntegrations", fields: [createdById], references: [id])
-  updatedBy User?               @relation("UpdatedIntegrations", fields: [updatedById], references: [id])
+  createdBy User                 @relation("CreatedIntegrations", fields: [createdById], references: [id])
+  updatedBy User?                @relation("UpdatedIntegrations", fields: [updatedById], references: [id])
   syncRuns  IntegrationSyncRun[]
 
   @@index([provider])
@@ -160,18 +161,18 @@ enum SyncStatus {
 }
 
 model IntegrationSyncRun {
-  id                 String        @id @default(cuid())
-  integrationConfigId String       @map("integration_config_id")
-  status             SyncStatus    @default(PENDING)
-  startedAt          DateTime      @default(now()) @map("started_at")
-  completedAt        DateTime?     @map("completed_at")
+  id                  String     @id @default(cuid())
+  integrationConfigId String     @map("integration_config_id")
+  status              SyncStatus @default(PENDING)
+  startedAt           DateTime   @default(now()) @map("started_at")
+  completedAt         DateTime?  @map("completed_at")
 
-  recordsProcessed   Int           @default(0) @map("records_processed")
-  recordsSucceeded   Int           @default(0) @map("records_succeeded")
-  recordsFailed      Int           @default(0) @map("records_failed")
+  recordsProcessed Int @default(0) @map("records_processed")
+  recordsSucceeded Int @default(0) @map("records_succeeded")
+  recordsFailed    Int @default(0) @map("records_failed")
 
-  errorMessage       String?       @map("error_message")
-  metadata           Json?
+  errorMessage String? @map("error_message")
+  metadata     Json?
 
   // Relations
   integrationConfig IntegrationConfig @relation(fields: [integrationConfigId], references: [id], onDelete: Cascade)
@@ -187,18 +188,18 @@ model IntegrationSyncRun {
 // ============================================
 
 model Neighborhood {
-  id          String   @id @default(cuid())
-  name        String
-  district    String
-  city        String
-  postalCode  String?  @map("postal_code")
+  id         String  @id @default(cuid())
+  name       String
+  district   String
+  city       String
+  postalCode String? @map("postal_code")
 
   // Quality scoring fields
-  qualityScore       Float?   @map("quality_score")
+  qualityScore          Float?    @map("quality_score")
   qualityScoreUpdatedAt DateTime? @map("quality_score_updated_at")
 
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
   customers CustomerSnapshot[]
@@ -214,21 +215,25 @@ model Neighborhood {
 // ============================================
 
 model CustomerSnapshot {
-  id                 String    @id @default(cuid())
-  externalId         String    @map("external_id") // ISSmanager customer ID
-  neighborhoodId     String?   @map("neighborhood_id")
+  id             String  @id @default(cuid())
+  externalId     String  @map("external_id") // External system customer ID
+  neighborhoodId String? @map("neighborhood_id")
 
-  name               String?
-  email              String?
-  phone              String?
-  address            String?
+  name    String?
+  email   String?
+  phone   String?
+  address String?
 
-  // ISSmanager specific fields (flexible, can expand)
-  issmanagerData     Json?     @map("issmanager_data")
+  // Source tracking
+  sourceType    String? @map("source_type") // "ISSMANAGER_API", "CSV_UPLOAD", etc.
+  sourceBatchId String? @map("source_batch_id") // Import batch reference
 
-  snapshotAt         DateTime  @default(now()) @map("snapshot_at")
-  createdAt          DateTime  @default(now()) @map("created_at")
-  updatedAt          DateTime  @updatedAt @map("updated_at")
+  // Source-specific raw data (flexible, source-agnostic)
+  sourceData Json? @map("source_data")
+
+  snapshotAt DateTime @default(now()) @map("snapshot_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
   // Relations
   neighborhood Neighborhood? @relation(fields: [neighborhoodId], references: [id], onDelete: SetNull)
@@ -237,6 +242,7 @@ model CustomerSnapshot {
   @@index([externalId])
   @@index([neighborhoodId])
   @@index([snapshotAt])
+  @@index([sourceBatchId])
   @@map("customer_snapshots")
 }
 
@@ -245,27 +251,32 @@ model CustomerSnapshot {
 // ============================================
 
 model PersonnelSnapshot {
-  id                 String    @id @default(cuid())
-  externalId         String    @map("external_id") // ISSmanager personnel ID
+  id         String @id @default(cuid())
+  externalId String @map("external_id") // External system personnel ID
 
-  name               String?
-  email              String?
-  phone              String?
-  role               String?
+  name  String?
+  email String?
+  phone String?
+  role  String?
 
   // Performance metrics (to be expanded)
-  performanceScore   Float?    @map("performance_score")
+  performanceScore Float? @map("performance_score")
 
-  // ISSmanager specific fields
-  issmanagerData     Json?     @map("issmanager_data")
+  // Source tracking
+  sourceType    String? @map("source_type")
+  sourceBatchId String? @map("source_batch_id")
 
-  snapshotAt         DateTime  @default(now()) @map("snapshot_at")
-  createdAt          DateTime  @default(now()) @map("created_at")
-  updatedAt          DateTime  @updatedAt @map("updated_at")
+  // Source-specific raw data
+  sourceData Json? @map("source_data")
+
+  snapshotAt DateTime @default(now()) @map("snapshot_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
   @@unique([externalId, snapshotAt])
   @@index([externalId])
   @@index([snapshotAt])
+  @@index([sourceBatchId])
   @@map("personnel_snapshots")
 }
 
@@ -274,24 +285,148 @@ model PersonnelSnapshot {
 // ============================================
 
 model FinanceSnapshot {
-  id                 String    @id @default(cuid())
-  externalId         String    @map("external_id") // ISSmanager finance record ID
+  id         String @id @default(cuid())
+  externalId String @map("external_id") // External system finance record ID
 
-  transactionType    String?   @map("transaction_type")
-  amount             Float?
-  currency           String?   @default("TRY")
-  date               DateTime?
+  transactionType String?   @map("transaction_type")
+  amount          Float?
+  currency        String?   @default("TRY")
+  date            DateTime?
 
-  // ISSmanager specific fields
-  issmanagerData     Json?     @map("issmanager_data")
+  // Source tracking
+  sourceType    String? @map("source_type")
+  sourceBatchId String? @map("source_batch_id")
 
-  snapshotAt         DateTime  @default(now()) @map("snapshot_at")
-  createdAt          DateTime  @default(now()) @map("created_at")
-  updatedAt          DateTime  @updatedAt @map("updated_at")
+  // Source-specific raw data
+  sourceData Json? @map("source_data")
+
+  snapshotAt DateTime @default(now()) @map("snapshot_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
   @@unique([externalId, snapshotAt])
   @@index([externalId])
   @@index([date])
   @@index([snapshotAt])
+  @@index([sourceBatchId])
   @@map("finance_snapshots")
+}
+
+// ============================================
+// DATA IMPORT TRACKING
+// ============================================
+
+enum ImportSourceType {
+  CSV_UPLOAD
+  EXCEL_UPLOAD
+  ISSMANAGER_API
+  DATABASE_EXPORT
+  MANUAL_ENTRY
+}
+
+enum ImportStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  PARTIALLY_COMPLETED
+}
+
+enum ImportEntityType {
+  CUSTOMER
+  PERSONNEL
+  FINANCE
+  NEIGHBORHOOD
+}
+
+model ImportBatch {
+  id         String           @id @default(cuid())
+  sourceType ImportSourceType @map("source_type")
+  entityType ImportEntityType @map("entity_type")
+  status     ImportStatus     @default(PENDING)
+
+  // File metadata (if applicable)
+  fileName     String? @map("file_name")
+  fileSize     Int?    @map("file_size")
+  fileMimeType String? @map("file_mime_type")
+
+  // Import statistics
+  totalRows   Int @default(0) @map("total_rows")
+  successRows Int @default(0) @map("success_rows")
+  failedRows  Int @default(0) @map("failed_rows")
+  skippedRows Int @default(0) @map("skipped_rows")
+
+  // Execution metadata
+  startedAt    DateTime? @map("started_at")
+  completedAt  DateTime? @map("completed_at")
+  errorMessage String?   @map("error_message")
+
+  // User tracking
+  createdByUserId String @map("created_by_user_id")
+  createdBy       User   @relation("CreatedImportBatches", fields: [createdByUserId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  errors ImportError[]
+  jobs   ImportJob[]
+
+  @@index([status])
+  @@index([entityType])
+  @@index([createdByUserId])
+  @@index([createdAt])
+  @@map("import_batches")
+}
+
+model ImportJob {
+  id      String      @id @default(cuid())
+  batchId String      @map("batch_id")
+  batch   ImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  rowNumber Int          @map("row_number")
+  status    ImportStatus @default(PENDING)
+
+  // Source data (raw)
+  rawData Json @map("raw_data")
+
+  // Normalized data (if successful)
+  normalizedData Json? @map("normalized_data")
+
+  // Processing metadata
+  processedAt  DateTime? @map("processed_at")
+  errorMessage String?   @map("error_message")
+
+  // Result tracking
+  resultEntityId String? @map("result_entity_id") // ID of created/updated snapshot
+  resultAction   String? @map("result_action") // "created", "updated", "skipped"
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([batchId])
+  @@index([status])
+  @@index([rowNumber])
+  @@map("import_jobs")
+}
+
+model ImportError {
+  id      String      @id @default(cuid())
+  batchId String      @map("batch_id")
+  batch   ImportBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  rowNumber    Int?   @map("row_number")
+  errorType    String @map("error_type") // "validation", "parsing", "duplicate", "constraint"
+  errorMessage String @map("error_message")
+  errorDetails Json?  @map("error_details")
+
+  // Field-level error tracking
+  fieldName  String? @map("field_name")
+  fieldValue String? @map("field_value")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([batchId])
+  @@index([errorType])
+  @@map("import_errors")
 }

@@ -76,3 +76,19 @@ export class ImportPreviewDto {
   detectedEncoding!: string;
   warnings!: string[];
 }
+
+export class UploadResponseDto {
+  batchId!: string;
+  status!: string;
+  totalRows!: number;
+  successRows!: number;
+  failedRows!: number;
+  skippedRows!: number;
+  message!: string;
+}
+
+export class BatchPreviewDto {
+  batch!: ImportBatchResponseDto;
+  sampleJobs!: ImportJobResponseDto[];
+  sampleErrors!: ImportErrorResponseDto[];
+}

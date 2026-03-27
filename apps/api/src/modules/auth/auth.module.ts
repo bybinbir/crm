@@ -7,6 +7,7 @@ import { AuditService } from '../audit/audit.service';
 
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
 @Module({
@@ -25,7 +26,13 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, PrismaService, JwtStrategy, AuditService],
-  exports: [AuthService, JwtStrategy, JwtModule],
+  providers: [
+    AuthService,
+    PrismaService,
+    JwtStrategy,
+    JwtAuthGuard,
+    AuditService,
+  ],
+  exports: [AuthService, JwtStrategy, JwtModule, JwtAuthGuard],
 })
 export class AuthModule {}

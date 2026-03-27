@@ -1,15 +1,23 @@
-import { Injectable, ExecutionContext } from '@nestjs/common';
+import {
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { AuthGuard } from '@nestjs/passport';
+import { JwtService } from '@nestjs/jwt';
+import { Request } from 'express';
+
+import { PrismaService } from '../../../common/prisma/prisma.service';
 
 @Injectable()
-export class JwtAuthGuard extends AuthGuard('jwt') {
-  constructor(private reflector: Reflector) {
-    super();
-  }
+export class JwtAuthGuard {
+  constructor(
+    private readonly reflector: Reflector,
+    private readonly jwtService: JwtService,
+    private readonly prisma: PrismaService
+  ) {}
 
-  canActivate(context: ExecutionContext) {
-    // Check if route is marked as public
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const isPublic = this.reflector.getAllAndOverride<boolean>('isPublic', [
       context.getHandler(),
       context.getClass(),
@@ -19,6 +27,46 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       return true;
     }
 
-    return super.canActivate(context);
+    const request = context.switchToHttp().getRequest<Request>();
+    const token = this.extractTokenFromHeader(request);
+
+    if (!token) {
+      throw new UnauthorizedException('No token provided');
+    }
+
+    try {
+      const payload = await this.jwtService.verifyAsync(token);
+
+      const user = await this.prisma.user.findUnique({
+        where: { id: payload.sub },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          isActive: true,
+        },
+      });
+
+      if (!user || !user.isActive) {
+        throw new UnauthorizedException('User not found or inactive');
+      }
+
+      request['user'] = user;
+      return true;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Invalid token';
+      throw new UnauthorizedException(message);
+    }
+  }
+
+  private extractTokenFromHeader(request: Request): string | undefined {
+    const authHeader = request.headers.authorization;
+    if (!authHeader) {
+      return undefined;
+    }
+
+    const [type, token] = authHeader.split(' ');
+    return type === 'Bearer' ? token : undefined;
   }
 }

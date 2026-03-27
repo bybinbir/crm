@@ -1,6 +1,6 @@
 'use client';
-import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import React, { useState } from 'react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -69,7 +69,7 @@ export default function LoginPage() {
               type="text"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@bullvar.com veya admin"
+              placeholder="admin@test.com veya admin"
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               required
               autoComplete="username"
@@ -142,17 +142,13 @@ export default function LoginPage() {
 
         <div className="mt-4 text-center space-y-2">
           <p className="text-xs text-gray-500">
-            <strong>Demo Giriş Bilgileri:</strong>
+            <strong>Test Giriş Bilgileri:</strong>
           </p>
           <p className="text-xs text-gray-600">
             E-posta:{' '}
             <code className="bg-gray-100 px-2 py-1 rounded">
-              admin@bullvar.com
+              admin@test.com
             </code>
-          </p>
-          <p className="text-xs text-gray-600">
-            Kullanıcı adı:{' '}
-            <code className="bg-gray-100 px-2 py-1 rounded">admin</code>
           </p>
           <p className="text-xs text-gray-600">
             Şifre: <code className="bg-gray-100 px-2 py-1 rounded">admin</code>

@@ -26,7 +26,7 @@ import { CreateIntegrationConfigDto, UpdateIntegrationConfigDto } from './dto';
 import { IntegrationsService } from './integrations.service';
 import { ISSManagerService } from './issmanager/issmanager.service';
 
-@Controller('api/v1/admin/integrations')
+@Controller('admin/integrations')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class IntegrationsController {
   constructor(

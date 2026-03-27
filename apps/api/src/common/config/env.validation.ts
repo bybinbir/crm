@@ -1,11 +1,5 @@
 import { plainToInstance } from 'class-transformer';
-import {
-  IsString,
-  IsPort,
-  IsUrl,
-  MinLength,
-  validateSync,
-} from 'class-validator';
+import { IsString, IsPort, MinLength, validateSync } from 'class-validator';
 
 /**
  * Environment variables validation schema
@@ -28,10 +22,8 @@ export class EnvironmentVariables {
   @MinLength(32, { message: 'ENCRYPTION_KEY must be at least 32 characters' })
   ENCRYPTION_KEY!: string;
 
-  @IsUrl(
-    { require_tld: false },
-    { message: 'DATABASE_URL must be a valid URL' }
-  )
+  @IsString()
+  @MinLength(10, { message: 'DATABASE_URL must be at least 10 characters' })
   DATABASE_URL!: string;
 
   @IsPort()

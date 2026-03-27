@@ -1,23 +1,34 @@
 /**
  * Prisma Service
  * Manages database connection lifecycle
+ * Prisma v7 with PostgreSQL adapter
  */
 
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 
 @Injectable()
 export class PrismaService
   extends PrismaClient
   implements OnModuleInit, OnModuleDestroy
 {
+  private pool: Pool;
+
   constructor() {
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    const adapter = new PrismaPg(pool as any);
+
     super({
+      adapter,
       log:
         process.env.NODE_ENV === 'development'
           ? ['query', 'error', 'warn']
           : ['error'],
     });
+
+    this.pool = pool;
   }
 
   async onModuleInit() {
@@ -26,6 +37,7 @@ export class PrismaService
 
   async onModuleDestroy() {
     await this.$disconnect();
+    await this.pool.end();
   }
 
   /**

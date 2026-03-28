@@ -5,8 +5,10 @@ import {
   UploadedFile,
   BadRequestException,
   UseGuards,
+  Body,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import type { ImportSourceType } from '@prisma/client';
 import type { Express } from 'express';
 
 import {
@@ -27,6 +29,7 @@ export class ImportsController {
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(
     @UploadedFile() file: Express.Multer.File,
+    @Body('sourceType') sourceType: ImportSourceType | undefined,
     @CurrentUser() user: CurrentUserData
   ): Promise<UploadResponseDto> {
     if (!file) {
@@ -49,12 +52,16 @@ export class ImportsController {
       throw new BadRequestException('File too large. Maximum size is 10MB.');
     }
 
-    const result = await this.processorService.processCustomerCsvImport(
+    // Default to CSV_UPLOAD for backward compatibility
+    const effectiveSourceType = sourceType || 'CSV_UPLOAD';
+
+    const result = await this.processorService.processCustomerImport(
       file.buffer,
       file.originalname,
       file.size,
       file.mimetype,
-      user.id
+      user.id,
+      effectiveSourceType
     );
 
     return result;

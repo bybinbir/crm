@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import type { Prisma } from '@prisma/client';
+import type { ImportSourceType, Prisma } from '@prisma/client';
 
 import { PrismaService } from '../../../common/prisma/prisma.service';
+import { ISSManagerExportAdapter } from '../adapters/issmanager-export.adapter';
 import { UploadResponseDto } from '../dto/import.dto';
 import { ImportsService } from '../imports.service';
 import { CsvParser } from '../parsers/csv-parser';
@@ -14,17 +15,18 @@ export class ImportProcessorService {
     private readonly importsService: ImportsService
   ) {}
 
-  async processCustomerCsvImport(
+  async processCustomerImport(
     fileBuffer: Buffer,
     fileName: string,
     fileSize: number,
     fileMimeType: string,
-    userId: string
+    userId: string,
+    sourceType: ImportSourceType = 'CSV_UPLOAD'
   ): Promise<UploadResponseDto> {
     // Step 1: Create import batch
     const batch = await this.importsService.createBatch(
       {
-        sourceType: 'CSV_UPLOAD',
+        sourceType,
         entityType: 'CUSTOMER',
         fileName,
         fileSize,
@@ -54,14 +56,27 @@ export class ImportProcessorService {
         }
       }
 
-      // Step 4: Map headers
+      // Step 4: Map headers based on source type
       const mappedRows = parseResult.rows.map((row, index) => {
-        const mappedRow: Record<string, unknown> = {};
+        let mappedRow: Record<string, unknown> = {};
 
-        for (const [key, value] of Object.entries(row)) {
-          const normalizedKey =
-            CsvParser.CUSTOMER_HEADER_MAPPINGS[key.toLowerCase().trim()] || key;
-          mappedRow[normalizedKey] = value;
+        if (sourceType === 'ISSMANAGER_EXPORT') {
+          // Use ISSManagerExportAdapter for ISSManager exports
+          try {
+            const normalized = ISSManagerExportAdapter.mapCustomer(row);
+            mappedRow = { ...normalized };
+          } catch {
+            // Keep raw data if mapping fails, will be caught in validation
+            mappedRow = row;
+          }
+        } else {
+          // Generic CSV mapping for CSV_UPLOAD
+          for (const [key, value] of Object.entries(row)) {
+            const normalizedKey =
+              CsvParser.CUSTOMER_HEADER_MAPPINGS[key.toLowerCase().trim()] ||
+              key;
+            mappedRow[normalizedKey] = value;
+          }
         }
 
         return {
@@ -147,10 +162,27 @@ export class ImportProcessorService {
           }
 
           // Extract neighborhood from address
-          const address = String(row.mappedData.address || '');
-          const neighborhoodName =
-            CustomerImportValidator.extractNeighborhood(address);
-          const location = CustomerImportValidator.extractLocation(address);
+          let neighborhoodName: string | null = null;
+          let location: { district: string | null; city: string | null };
+
+          if (sourceType === 'ISSMANAGER_EXPORT') {
+            // ISSManagerExportAdapter already parsed address
+            neighborhoodName = row.mappedData.neighborhoodName
+              ? String(row.mappedData.neighborhoodName)
+              : null;
+            location = {
+              district: row.mappedData.district
+                ? String(row.mappedData.district)
+                : null,
+              city: row.mappedData.city ? String(row.mappedData.city) : null,
+            };
+          } else {
+            // Generic CSV: extract from address field
+            const address = String(row.mappedData.address || '');
+            neighborhoodName =
+              CustomerImportValidator.extractNeighborhood(address);
+            location = CustomerImportValidator.extractLocation(address);
+          }
 
           // Find or create neighborhood
           let neighborhoodId: string | null = null;
@@ -190,7 +222,7 @@ export class ImportProcessorService {
                 ? String(row.mappedData.address)
                 : null,
               neighborhoodId,
-              sourceType: 'CSV_UPLOAD',
+              sourceType,
               sourceBatchId: batch.id,
               sourceData: row.rawData as Prisma.InputJsonValue,
               snapshotAt: new Date(),

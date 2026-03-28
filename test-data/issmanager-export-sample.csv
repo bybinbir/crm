@@ -1,0 +1,6 @@
+abone_no,isim,email,telefon,adres,fatura_adres,tarife,tarife_fiyat,bitis_tarihi,bakiye
+12345,Ahmet Yılmaz,ahmet@example.com,+90 532 123 4567,Güzeloba Mah. Lara Cd. No:7/7 Muratpaşa/Antalya,Güzeloba Mah. Lara Cd. No:7/7 Muratpaşa/Antalya,Premium Fiber 100,299.90,2026-12-31,50.00
+12346,Mehmet Demir,mehmet@example.com,+90 533 234 5678,Konyaaltı Mah. Atatürk Blv. No:15/3 Konyaaltı/Antalya,Konyaaltı Mah. Atatürk Blv. No:15/3 Konyaaltı/Antalya,Standard 50,199.90,2026-11-30,0.00
+12347,Ayşe Kaya,ayse@example.com,+90 534 345 6789,Fener Mah. İnönü Cd. No:22/9 Muratpaşa/Antalya,Fener Mah. İnönü Cd. No:22/9 Muratpaşa/Antalya,Business 200,499.90,2027-01-31,-25.50
+12348,Fatma Şahin,fatma@example.com,+90 535 456 7890,Uncalı Mah. Lara Yolu No:45/12 Konyaaltı/Antalya,Uncalı Mah. Lara Yolu No:45/12 Konyaaltı/Antalya,Premium Fiber 100,299.90,2026-10-15,100.00
+12349,Ali Özdemir,ali@example.com,+90 536 567 8901,Varsak Mah. Cumhuriyet Cd. No:8/5 Kepez/Antalya,Varsak Mah. Cumhuriyet Cd. No:8/5 Kepez/Antalya,Standard 50,199.90,2026-09-30,25.00

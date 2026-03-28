@@ -84,3 +84,12 @@ scripts/debug-*.js
 scripts/verify-*.js
 scripts/verify-*.ts
 scripts/fix-*.js
+
+# Temporary development utilities (ad-hoc testing/debugging)
+*-debug.py
+*-test.py
+*-verify.py
+add-*.py
+check-*.py
+test-*.py
+verify-*.py

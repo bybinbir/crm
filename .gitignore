@@ -24,6 +24,12 @@ out/
 .env.production.local
 *.local
 
+# Deployment metadata
+.last-deploy
+
+# Backups
+backups/
+
 # Logs
 logs/
 *.log

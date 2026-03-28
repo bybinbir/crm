@@ -1,191 +1,363 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import api from '@/lib/api';
+
+interface ImportSummary {
+  totalBatches: number;
+  totalImportedRows: number;
+  totalFailedRows: number;
+  overallSuccessRate: number;
+  sourceDistribution: {
+    sourceType: string;
+    count: number;
+    percentage: number;
+  }[];
+  recentImports: {
+    batchId: string;
+    sourceType: string;
+    fileName: string;
+    totalRows: number;
+    successRows: number;
+    failedRows: number;
+    status: string;
+    importedAt: string;
+  }[];
+}
+
+interface DataQuality {
+  totalCustomers: number;
+  totalNeighborhoods: number;
+  customersWithNeighborhood: number;
+  neighborhoodCoverageRate: number;
+  topNeighborhoods: {
+    id: string;
+    name: string;
+    district: string;
+    city: string;
+    customerCount: number;
+  }[];
+}
+
+interface ReportsSummary {
+  importSummary: ImportSummary;
+  dataQuality: DataQuality;
+  generatedAt: string;
+}
 
 export default function ReportsPage() {
-  const [timeRange, setTimeRange] = useState('month');
+  const [data, setData] = useState<ReportsSummary | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock data - in production this would come from API
-  const metrics = {
-    totalRevenue: '₺125,340',
-    activeCustomers: 842,
-    avgQualityScore: 7.8,
-    avgResponseTime: '2.4 saat',
+  useEffect(() => {
+    api
+      .get('/api/v1/dashboard/reports')
+      .then((res) => {
+        setData(res.data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(
+          err.response?.data?.message ||
+            'Rapor verileri yüklenirken hata oluştu'
+        );
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold text-gray-900">Raporlar</h1>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-gray-500">Yükleniyor...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold text-gray-900">Raporlar</h1>
+        <div className="bg-red-50 border-l-4 border-red-400 p-4">
+          <div className="flex">
+            <div className="ml-3">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold text-gray-900">Raporlar</h1>
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+          <p className="text-sm text-yellow-700">Veri bulunamadı</p>
+        </div>
+      </div>
+    );
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString('tr-TR');
   };
-
-  const reportTypes = [
-    {
-      id: 'neighborhood',
-      title: 'Mahalle Kalite Raporu',
-      description: 'Mahalle bazlı müşteri kalite skorları ve dağılım analizi',
-      status: 'available',
-    },
-    {
-      id: 'personnel',
-      title: 'Personel Performans Raporu',
-      description:
-        'Personel verimliliği, tamamlanan görevler ve yanıt süreleri',
-      status: 'available',
-    },
-    {
-      id: 'financial',
-      title: 'Finansal Rapor',
-      description: 'Gelir, maliyet ve kar marjı analizi',
-      status: 'available',
-    },
-    {
-      id: 'decision',
-      title: 'Karar Destek Raporu',
-      description: 'Yönetici karar desteği için öneriler ve içgörüler',
-      status: 'available',
-    },
-  ];
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">Raporlar</h1>
-        <select
-          value={timeRange}
-          onChange={(e) => setTimeRange(e.target.value)}
-          className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          disabled
-        >
-          <option value="week">Son 7 Gün</option>
-          <option value="month">Son 30 Gün</option>
-          <option value="quarter">Son 90 Gün</option>
-          <option value="year">Son 1 Yıl</option>
-        </select>
+        <span className="text-sm text-gray-500">
+          Oluşturulma: {formatDate(data.generatedAt)}
+        </span>
       </div>
 
-      {/* Placeholder Warning */}
-      <div className="bg-amber-50 border-l-4 border-amber-400 p-4">
+      {/* Import Summary Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <MetricCard
+          title="Toplam Import"
+          value={data.importSummary.totalBatches.toString()}
+          description="Batch sayısı"
+        />
+        <MetricCard
+          title="Başarılı Satır"
+          value={data.importSummary.totalImportedRows.toString()}
+          description="Import edilen"
+        />
+        <MetricCard
+          title="Başarı Oranı"
+          value={`${data.importSummary.overallSuccessRate}%`}
+          description="Genel başarı"
+        />
+        <MetricCard
+          title="Başarısız Satır"
+          value={data.importSummary.totalFailedRows.toString()}
+          description="Hatalı kayıt"
+        />
+      </div>
+
+      {/* Source Distribution */}
+      <div className="bg-white rounded-lg shadow">
+        <div className="p-6 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900">
+            Veri Kaynağı Dağılımı
+          </h2>
+        </div>
+        <div className="p-6">
+          <div className="space-y-4">
+            {data.importSummary.sourceDistribution.map((source) => (
+              <div key={source.sourceType} className="flex items-center">
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium text-gray-700">
+                      {source.sourceType}
+                    </span>
+                    <span className="text-sm text-gray-500">
+                      {source.count} batch ({source.percentage}%)
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-blue-600 h-2 rounded-full"
+                      style={{ width: `${source.percentage}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Data Quality Metrics */}
+      <div className="bg-white rounded-lg shadow">
+        <div className="p-6 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900">Veri Kalitesi</h2>
+        </div>
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <div className="text-sm text-gray-500">Toplam Müşteri</div>
+              <div className="text-2xl font-semibold text-gray-900">
+                {data.dataQuality.totalCustomers}
+              </div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-500">Toplam Mahalle</div>
+              <div className="text-2xl font-semibold text-gray-900">
+                {data.dataQuality.totalNeighborhoods}
+              </div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-500">
+                Mahalle Bilgili Müşteri
+              </div>
+              <div className="text-2xl font-semibold text-gray-900">
+                {data.dataQuality.customersWithNeighborhood}
+              </div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-500">Mahalle Kapsama Oranı</div>
+              <div className="text-2xl font-semibold text-gray-900">
+                {data.dataQuality.neighborhoodCoverageRate}%
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Top Neighborhoods */}
+      <div className="bg-white rounded-lg shadow">
+        <div className="p-6 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900">
+            En Çok Müşterili Mahalleler
+          </h2>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Mahalle
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  İlçe
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Şehir
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Müşteri Sayısı
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {data.dataQuality.topNeighborhoods.map((neighborhood) => (
+                <tr key={neighborhood.id}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {neighborhood.name}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {neighborhood.district}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {neighborhood.city}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {neighborhood.customerCount}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Recent Imports */}
+      <div className="bg-white rounded-lg shadow">
+        <div className="p-6 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900">
+            Son Import İşlemleri
+          </h2>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Tarih
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Kaynak
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Dosya
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Başarılı
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Başarısız
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Durum
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {data.importSummary.recentImports.map((importItem) => (
+                <tr key={importItem.batchId}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {formatDate(importItem.importedAt)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      {importItem.sourceType}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
+                    {importItem.fileName}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {importItem.successRows}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {importItem.failedRows}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        importItem.status === 'COMPLETED'
+                          ? 'bg-green-100 text-green-800'
+                          : importItem.status === 'PARTIALLY_COMPLETED'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-red-100 text-red-800'
+                      }`}
+                    >
+                      {importItem.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Module Status Notice */}
+      <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
         <div className="flex">
           <div className="flex-shrink-0">
             <svg
-              className="h-5 w-5 text-amber-400"
+              className="h-5 w-5 text-blue-400"
               viewBox="0 0 20 20"
               fill="currentColor"
             >
               <path
                 fillRule="evenodd"
-                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
                 clipRule="evenodd"
               />
             </svg>
           </div>
           <div className="ml-3">
-            <h3 className="text-sm font-medium text-amber-800">
-              Geliştirme Aşamasında - Placeholder Veriler
-            </h3>
-            <div className="mt-2 text-sm text-amber-700">
-              <p>
-                Bu sayfa şu anda örnek verilerle gösterilmektedir. Gerçek rapor
-                üretimi backend API entegrasyonu sonrası aktif olacaktır.
-                Gösterilen metrikler ve rapor durumları gerçeği yansıtmamaktadır.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Summary Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <MetricCard
-          title="Toplam Gelir"
-          value={metrics.totalRevenue}
-          trend="+12%"
-          trendUp={true}
-        />
-        <MetricCard
-          title="Aktif Müşteri"
-          value={metrics.activeCustomers.toString()}
-          trend="+5%"
-          trendUp={true}
-        />
-        <MetricCard
-          title="Ort. Kalite Skoru"
-          value={metrics.avgQualityScore.toString()}
-          trend="-0.2"
-          trendUp={false}
-        />
-        <MetricCard
-          title="Ort. Yanıt Süresi"
-          value={metrics.avgResponseTime}
-          trend="-15%"
-          trendUp={true}
-        />
-      </div>
-
-      {/* Report Types */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Rapor Tipleri</h2>
-          <p className="mt-1 text-sm text-gray-600">
-            İhtiyacınız olan raporu seçin ve indirin
-          </p>
-        </div>
-        <div className="divide-y divide-gray-200">
-          {reportTypes.map((report) => (
-            <div
-              key={report.id}
-              className="p-6 hover:bg-gray-50 transition-colors"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <h3 className="text-base font-medium text-gray-900">
-                    {report.title}
-                  </h3>
-                  <p className="mt-1 text-sm text-gray-600">
-                    {report.description}
-                  </p>
-                </div>
-                <div className="ml-4 flex items-center space-x-3">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    {report.status === 'available' ? 'Hazır' : 'Beklemede'}
-                  </span>
-                  <button
-                    disabled
-                    className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gray-400 cursor-not-allowed opacity-60"
-                    title="Backend API entegrasyonu bekleniyor"
-                  >
-                    Oluştur
-                  </button>
-                  <button
-                    disabled
-                    className="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-400 bg-gray-50 cursor-not-allowed opacity-60"
-                    title="Backend API entegrasyonu bekleniyor"
-                  >
-                    Önizle
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Export Options */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-        <div className="flex items-start">
-          <div className="flex-shrink-0">
-            <svg
-              className="h-6 w-6 text-blue-600"
-              fill="none"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-          </div>
-          <div className="ml-3">
-            <h3 className="text-sm font-medium text-blue-800">
-              Rapor Formatları
-            </h3>
+            <h3 className="text-sm font-medium text-blue-800">Modül Durumu</h3>
             <div className="mt-2 text-sm text-blue-700">
-              <p>Raporlar PDF, Excel ve CSV formatlarında indirilebilir.</p>
+              <p>
+                <strong>Personnel Raporları:</strong> Veri kaynağı henüz bağlı
+                değil (UNSUPPORTED)
+              </p>
+              <p className="mt-1">
+                <strong>Finance Raporları:</strong> Veri kaynağı henüz bağlı
+                değil (UNSUPPORTED)
+              </p>
+              <p className="mt-1">
+                <strong>Neighborhood & Import Raporları:</strong> Gerçek veriden
+                beslenmektedir (OPERATIONAL)
+              </p>
             </div>
           </div>
         </div>
@@ -197,51 +369,22 @@ export default function ReportsPage() {
 function MetricCard({
   title,
   value,
-  trend,
-  trendUp,
+  description,
 }: {
   title: string;
   value: string;
-  trend: string;
-  trendUp: boolean;
+  description?: string;
 }) {
   return (
     <div className="bg-white overflow-hidden shadow rounded-lg">
       <div className="p-5">
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <div className="text-sm font-medium text-gray-500 truncate">
-              {title}
-            </div>
-            <div className="mt-1 text-2xl font-semibold text-gray-900">
-              {value}
-            </div>
-          </div>
-          <div
-            className={`ml-2 flex items-center text-sm ${
-              trendUp ? 'text-green-600' : 'text-red-600'
-            }`}
-          >
-            {trendUp ? (
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            ) : (
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            )}
-            <span className="ml-1">{trend}</span>
-          </div>
+        <div className="text-sm font-medium text-gray-500 truncate">
+          {title}
         </div>
+        <div className="mt-1 text-2xl font-semibold text-gray-900">{value}</div>
+        {description && (
+          <div className="mt-1 text-xs text-gray-500">{description}</div>
+        )}
       </div>
     </div>
   );

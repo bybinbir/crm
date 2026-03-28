@@ -4,6 +4,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 import { DashboardService } from './dashboard.service';
 import { DashboardMetricsDto } from './dto/dashboard.dto';
+import { ReportsSummaryDto } from './dto/reports.dto';
 
 @Controller('dashboard')
 @UseGuards(JwtAuthGuard)
@@ -13,5 +14,10 @@ export class DashboardController {
   @Get('metrics')
   async getMetrics(): Promise<DashboardMetricsDto> {
     return this.dashboardService.getMetrics();
+  }
+
+  @Get('reports')
+  async getReportsSummary(): Promise<ReportsSummaryDto> {
+    return this.dashboardService.getReportsSummary();
   }
 }

@@ -6,6 +6,7 @@ export class CreateImportBatchDto {
     'CSV_UPLOAD',
     'EXCEL_UPLOAD',
     'ISSMANAGER_API',
+    'ISSMANAGER_EXPORT',
     'DATABASE_EXPORT',
     'MANUAL_ENTRY',
   ])

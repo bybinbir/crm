@@ -5,7 +5,8 @@ set -euo pipefail
 
 # Configuration
 PROD_DOMAIN="${PROD_DOMAIN:-}"
-PROD_API_BASE="${PROD_API_BASE:-https://$PROD_DOMAIN/api/v1}"
+PROD_PROTOCOL="${PROD_PROTOCOL:-https}"  # Default to https, override with http for local
+PROD_API_BASE="${PROD_API_BASE:-$PROD_PROTOCOL://$PROD_DOMAIN/api/v1}"
 
 # Colors
 RED='\033[0;31m'
@@ -48,7 +49,7 @@ fi
 
 # Test 2: Homepage
 echo "Test 2: Homepage"
-HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "https://$PROD_DOMAIN/")
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$PROD_PROTOCOL://$PROD_DOMAIN/")
 if [ "$HTTP_CODE" = "200" ]; then
   pass "Homepage returns 200 OK"
 else
@@ -57,7 +58,7 @@ fi
 
 # Test 3: Login Page
 echo "Test 3: Login Page"
-HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "https://$PROD_DOMAIN/login")
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$PROD_PROTOCOL://$PROD_DOMAIN/login")
 if [ "$HTTP_CODE" = "200" ]; then
   pass "Login page returns 200 OK"
 else
@@ -66,7 +67,7 @@ fi
 
 # Test 4: Dashboard (Auth Check)
 echo "Test 4: Dashboard Auth Redirect"
-HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "https://$PROD_DOMAIN/dashboard")
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$PROD_PROTOCOL://$PROD_DOMAIN/dashboard")
 if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "307" ] || [ "$HTTP_CODE" = "302" ]; then
   pass "Dashboard returns $HTTP_CODE (redirect or authenticated)"
 else

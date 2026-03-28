@@ -12,7 +12,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { Role } from '@prisma/client';
-import { Request } from 'express';
+import type { Request } from 'express';
 
 import {
   CurrentUser,

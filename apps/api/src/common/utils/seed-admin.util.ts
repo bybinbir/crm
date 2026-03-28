@@ -1,6 +1,6 @@
 /**
  * Seed Admin User Utility
- * Creates or updates admin@admin.com user on bootstrap
+ * Creates or updates admin user on bootstrap using env credentials
  */
 
 import type { PrismaClient } from '@prisma/client';
@@ -8,8 +8,8 @@ import type { PrismaClient } from '@prisma/client';
 import { hashPassword } from './encryption.util';
 
 export async function seedAdminUser(prisma: PrismaClient): Promise<void> {
-  const adminEmail = 'admin@admin.com';
-  const adminPassword = 'admin';
+  const adminEmail = process.env.DEFAULT_ADMIN_EMAIL || 'admin@example.com';
+  const adminPassword = process.env.DEFAULT_ADMIN_PASSWORD || 'admin123';
 
   try {
     // Check if user exists

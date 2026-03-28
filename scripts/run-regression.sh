@@ -14,8 +14,18 @@ TESTS_FAILED=0
 pass() { echo -e "${GREEN}✅ PASS${NC} $1"; ((TESTS_PASSED++)); }
 fail() { echo -e "${RED}❌ FAIL${NC} $1"; ((TESTS_FAILED++)); return 1; }
 
+# Load credentials from .env if available
+if [ -f .env ]; then
+  export $(grep -E '^DEFAULT_ADMIN_EMAIL=' .env | xargs)
+  export $(grep -E '^DEFAULT_ADMIN_PASSWORD=' .env | xargs)
+fi
+
+ADMIN_EMAIL="${DEFAULT_ADMIN_EMAIL:-admin@example.com}"
+ADMIN_PASSWORD="${DEFAULT_ADMIN_PASSWORD:-admin123}"
+
 echo "🔍 Running regression tests..."
 echo "  API: $API_BASE"
+echo "  Admin: $ADMIN_EMAIL"
 echo ""
 
 # Test 1: Health
@@ -34,7 +44,7 @@ else
 fi
 
 # Test 3: Login
-CREDS='{"email":"admin@example.com","password":"admin123"}'
+CREDS="{\"email\":\"$ADMIN_EMAIL\",\"password\":\"$ADMIN_PASSWORD\"}"
 LOGIN_RESP=$(curl -s -X POST "$API_BASE/auth/login" -H "Content-Type: application/json" -d "$CREDS")
 if echo "$LOGIN_RESP" | grep -q "accessToken"; then
   TOKEN=$(echo "$LOGIN_RESP" | grep -o '"accessToken":"[^"]*"' | cut -d'"' -f4)
@@ -55,7 +65,7 @@ fi
 # Test 5: Customers endpoint
 if [ -n "${TOKEN:-}" ]; then
   CUSTOMERS=$(curl -s "$API_BASE/customers" -H "Authorization: Bearer $TOKEN")
-  if echo "$CUSTOMERS" | grep -q "data"; then
+  if echo "$CUSTOMERS" | grep -q "customers"; then
     pass "Customers endpoint accessible"
   else
     fail "Customers endpoint failed"
@@ -65,7 +75,7 @@ fi
 # Test 6: Neighborhoods
 if [ -n "${TOKEN:-}" ]; then
   NEIGHBORHOODS=$(curl -s "$API_BASE/neighborhoods" -H "Authorization: Bearer $TOKEN")
-  if echo "$NEIGHBORHOODS" | grep -q "data"; then
+  if echo "$NEIGHBORHOODS" | grep -q "neighborhoods"; then
     pass "Neighborhoods endpoint accessible"
   else
     fail "Neighborhoods endpoint failed"

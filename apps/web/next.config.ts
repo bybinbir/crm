@@ -9,7 +9,8 @@ const nextConfig: NextConfig = {
   // Production: nginx handles this
   async rewrites() {
     const isDevelopment = process.env.NODE_ENV === 'development';
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    // Hardcode for now - env vars not available at build time
+    const apiUrl = 'http://localhost:4000';
 
     // Only add rewrite in development
     if (isDevelopment) {

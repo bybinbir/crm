@@ -1,7 +1,7 @@
 #!/bin/bash
 # Automated Regression Test Suite
 # API smoke tests for critical paths
-set -euo pipefail
+set -uo pipefail
 
 API_BASE="${API_BASE:-http://localhost:3001/api/v1}"
 GREEN='\033[0;32m'

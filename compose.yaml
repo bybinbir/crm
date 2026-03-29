@@ -1,3 +1,8 @@
+# ⚠️ DEPRECATED - DEVELOPMENT ONLY
+# Production uses host-native systemd services (crmanaliz-api, crmanaliz-web)
+# This file is kept for local development only
+# See docs/ENVIRONMENT.md for production deployment
+
 services:
   postgres:
     image: postgres:16-alpine

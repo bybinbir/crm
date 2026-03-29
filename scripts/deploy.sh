@@ -1,4 +1,7 @@
 #!/bin/bash
+# ⚠️ DEPRECATED - DOCKER-BASED DEPLOYMENT
+# This script is obsolete. Production uses host-native systemd services.
+# Use scripts/deploy-to-production.sh instead for systemd-based deployment.
 set -e
 echo "🚀 Starting deployment..."
 if [ ! -f .env ]; then echo "❌ .env file not found"; exit 1; fi

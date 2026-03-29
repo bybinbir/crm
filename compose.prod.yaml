@@ -1,3 +1,11 @@
+# ⚠️ DEPRECATED - NOT USED IN PRODUCTION
+# Production uses host-native systemd services:
+# - crmanaliz-api.service (NestJS API on port 3000)
+# - crmanaliz-web.service (Next.js on port 4000)
+# - nginx (reverse proxy)
+# - postgresql (host-native PostgreSQL)
+# This file is obsolete and kept only for historical reference
+
 services:
   postgres:
     image: postgres:16-alpine

@@ -28,7 +28,7 @@ export class JwtAuthGuard {
     }
 
     const request = context.switchToHttp().getRequest<Request>();
-    const token = this.extractTokenFromHeader(request);
+    const token = this.extractToken(request);
 
     if (!token) {
       throw new UnauthorizedException('No token provided');
@@ -60,13 +60,19 @@ export class JwtAuthGuard {
     }
   }
 
-  private extractTokenFromHeader(request: Request): string | undefined {
-    const authHeader = request.headers.authorization;
-    if (!authHeader) {
-      return undefined;
+  private extractToken(request: Request): string | undefined {
+    // First try to extract from cookie (primary method for web app)
+    if (request.cookies?.accessToken) {
+      return request.cookies.accessToken;
     }
 
-    const [type, token] = authHeader.split(' ');
-    return type === 'Bearer' ? token : undefined;
+    // Fallback to Authorization header (for API clients)
+    const authHeader = request.headers.authorization;
+    if (authHeader) {
+      const [type, token] = authHeader.split(' ');
+      return type === 'Bearer' ? token : undefined;
+    }
+
+    return undefined;
   }
 }

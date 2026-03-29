@@ -1,3 +1,10 @@
+# ⚠️  DEPRECATED - Host-Native Deployment Only
+# This Dockerfile is no longer used in production.
+# Production uses systemd service: crmanaliz-web.service
+# See: docs/releases/CRM-ANALIZ-HOST-NATIVE-FINALIZATION-039.md
+# Last Docker deployment: 2026-03-25
+# Use for local development only
+
 FROM node:20-alpine AS base
 RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
 WORKDIR /app

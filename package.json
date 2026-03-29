@@ -17,6 +17,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
     "clean": "turbo run clean && rm -rf node_modules .turbo",
+    "check:docker": "bash scripts/check-docker-refs.sh",
     "prepare": "husky",
     "changeset": "changeset",
     "version": "changeset version",

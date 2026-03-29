@@ -11,7 +11,7 @@
 **All objectives achieved beyond original targets:**
 
 - ✅ Zero `any` types (was 6, now 0)
-- ✅ Zero ESLint warnings (was 6, now 0)  
+- ✅ Zero ESLint warnings (was 6, now 0)
 - ✅ Zero TypeScript errors
 - ✅ Production build: 12/12 routes successful
 - ✅ Environment validation added (`env.ts`)
@@ -24,6 +24,7 @@
 ### 1. Type Safety - 100% Clean
 
 **Before:**
+
 ```typescript
 // 5 instances of `any` type
 catch (err: any) { ... }                    // login/page.tsx
@@ -33,11 +34,12 @@ const [logs, setLogs] = useState<any[]>([]) // audit-logs/page.tsx
 ```
 
 **After:**
+
 ```typescript
 // Zero `any` types - proper type guards
 catch (err) {
-  const errorMessage = err instanceof Error 
-    ? err.message 
+  const errorMessage = err instanceof Error
+    ? err.message
     : 'Default error';
 }
 
@@ -54,6 +56,7 @@ interface AuditLog {
 ```
 
 **Verification:**
+
 ```bash
 $ cd apps/web && pnpm exec eslint "src/**/*.{ts,tsx}" --max-warnings 0
 ✅ No warnings or errors
@@ -75,14 +78,12 @@ export function validateEnv(): void {
   if (env.isProduction && !env.apiUrl) {
     throw new Error(
       'NEXT_PUBLIC_API_URL must be set in production. ' +
-      'Add it to your environment or .env.production file.'
+        'Add it to your environment or .env.production file.'
     );
   }
 
   if (env.isProduction && env.apiUrl?.includes('localhost')) {
-    console.warn(
-      '⚠️  WARNING: localhost in production build - DO NOT deploy!'
-    );
+    console.warn('⚠️  WARNING: localhost in production build - DO NOT deploy!');
   }
 }
 
@@ -93,6 +94,7 @@ if (typeof window === 'undefined' && env.isProduction) {
 ```
 
 **Impact:**
+
 - Production builds **cannot proceed** without `NEXT_PUBLIC_API_URL`
 - Warns (but allows) localhost for local production testing
 - Prevents accidental deployment with dev configuration
@@ -127,27 +129,27 @@ Route (app)                                 Size  First Load JS
 
 ## Updated Quality Metrics
 
-| Metric | Previous Report | Current | Change |
-|--------|----------------|---------|--------|
-| `any` types | 6 | **0** | ✅ -100% |
-| ESLint warnings | 6 | **0** | ✅ -100% |
-| TypeScript errors | 0 | **0** | ✅ Maintained |
-| Production build | Not tested | **12/12 pass** | ✅ New |
-| Env validation | None | **Enforced** | ✅ New |
-| State handling | 9/9 modules | **9/9 modules** | ✅ Maintained |
+| Metric            | Previous Report | Current         | Change        |
+| ----------------- | --------------- | --------------- | ------------- |
+| `any` types       | 6               | **0**           | ✅ -100%      |
+| ESLint warnings   | 6               | **0**           | ✅ -100%      |
+| TypeScript errors | 0               | **0**           | ✅ Maintained |
+| Production build  | Not tested      | **12/12 pass**  | ✅ New        |
+| Env validation    | None            | **Enforced**    | ✅ New        |
+| State handling    | 9/9 modules     | **9/9 modules** | ✅ Maintained |
 
 ---
 
 ## Files Modified (This Session)
 
-| File | Change | Lines | Impact |
-|------|--------|-------|--------|
-| [`apps/web/src/lib/env.ts`](apps/web/src/lib/env.ts) | **NEW** | 40 | Production safety |
-| [`apps/web/src/lib/api.ts`](apps/web/src/lib/api.ts:3) | Import env module | +1 | Centralized config |
-| [`apps/web/src/app/(auth)/login/page.tsx`](apps/web/src/app/(auth)/login/page.tsx:40-43) | `any` → type guard | 3 | Type safety |
-| [`apps/web/src/app/(dashboard)/layout.tsx`](apps/web/src/app/(dashboard)/layout.tsx:3,8,75) | Import `Route` type | 3 | Type safety |
-| [`apps/web/src/app/(dashboard)/dashboard/audit-logs/page.tsx`](apps/web/src/app/(dashboard)/dashboard/audit-logs/page.tsx) | Full rewrite | 127 | Type safety + states |
-| [`apps/web/src/app/(dashboard)/dashboard/integrations/issmanager/page.tsx`](apps/web/src/app/(dashboard)/dashboard/integrations/issmanager/page.tsx:73-141) | 3x `any` → `unknown` | 69 | Type safety |
+| File                                                                                                                                                          | Change               | Lines | Impact               |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | ----- | -------------------- |
+| [`apps/web/src/lib/env.ts`](apps/web/src/lib/env.ts)                                                                                                          | **NEW**              | 40    | Production safety    |
+| [`apps/web/src/lib/api.ts`](apps/web/src/lib/api.ts:3)                                                                                                        | Import env module    | +1    | Centralized config   |
+| [`apps/web/src/app/(auth)/login/page.tsx`](<apps/web/src/app/(auth)/login/page.tsx:40-43>)                                                                    | `any` → type guard   | 3     | Type safety          |
+| [`apps/web/src/app/(dashboard)/layout.tsx`](<apps/web/src/app/(dashboard)/layout.tsx:3,8,75>)                                                                 | Import `Route` type  | 3     | Type safety          |
+| [`apps/web/src/app/(dashboard)/dashboard/audit-logs/page.tsx`](<apps/web/src/app/(dashboard)/dashboard/audit-logs/page.tsx>)                                  | Full rewrite         | 127   | Type safety + states |
+| [`apps/web/src/app/(dashboard)/dashboard/integrations/issmanager/page.tsx`](<apps/web/src/app/(dashboard)/dashboard/integrations/issmanager/page.tsx:73-141>) | 3x `any` → `unknown` | 69    | Type safety          |
 
 ---
 
@@ -158,7 +160,7 @@ Route (app)                                 Size  First Load JS
 **Pre-Flight Checklist:**
 
 - [x] Zero TypeScript errors
-- [x] Zero ESLint warnings  
+- [x] Zero ESLint warnings
 - [x] Zero `any` types
 - [x] Production build successful (12 routes)
 - [x] Environment validation enforced

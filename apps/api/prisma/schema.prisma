@@ -139,9 +139,10 @@ model IntegrationConfig {
   updatedById String?  @map("updated_by_id")
 
   // Relations
-  createdBy User                 @relation("CreatedIntegrations", fields: [createdById], references: [id])
-  updatedBy User?                @relation("UpdatedIntegrations", fields: [updatedById], references: [id])
-  syncRuns  IntegrationSyncRun[]
+  createdBy          User                   @relation("CreatedIntegrations", fields: [createdById], references: [id])
+  updatedBy          User?                  @relation("UpdatedIntegrations", fields: [updatedById], references: [id])
+  syncRuns           IntegrationSyncRun[]
+  automationSchedules AutomationSchedule[]
 
   @@index([provider])
   @@index([isEnabled])
@@ -430,4 +431,104 @@ model ImportError {
   @@index([batchId])
   @@index([errorType])
   @@map("import_errors")
+}
+
+// ============================================
+// AUTOMATION SCHEDULER & JOBS
+// ============================================
+
+enum AutomationJobType {
+  ISSMANAGER_EXPORT_IMPORT
+}
+
+enum AutomationJobStatus {
+  SCHEDULED
+  QUEUED
+  RUNNING
+  EXPORTING
+  IMPORTING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum AutomationTriggerType {
+  SCHEDULED // Cron-based scheduled run
+  MANUAL    // User-triggered manual run
+}
+
+model AutomationSchedule {
+  id                  String              @id @default(cuid())
+  integrationConfigId String              @map("integration_config_id")
+  jobType             AutomationJobType   @map("job_type")
+  isEnabled           Boolean             @default(true) @map("is_enabled")
+
+  // Schedule configuration
+  cronExpression String  @map("cron_expression") // e.g., "0 18 * * *" for daily 18:00
+  timezone       String  @default("Europe/Istanbul")
+
+  // Execution tracking
+  lastRunAt         DateTime? @map("last_run_at")
+  lastRunStatus     String?   @map("last_run_status")
+  nextScheduledRunAt DateTime? @map("next_scheduled_run_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  integrationConfig IntegrationConfig   @relation(fields: [integrationConfigId], references: [id], onDelete: Cascade)
+  jobs              AutomationJob[]
+
+  @@unique([integrationConfigId, jobType])
+  @@index([isEnabled])
+  @@index([nextScheduledRunAt])
+  @@map("automation_schedules")
+}
+
+model AutomationJob {
+  id         String                @id @default(cuid())
+  scheduleId String?               @map("schedule_id")
+  jobType    AutomationJobType     @map("job_type")
+  status     AutomationJobStatus   @default(SCHEDULED)
+  triggerType AutomationTriggerType @default(SCHEDULED) @map("trigger_type")
+
+  // Execution tracking
+  startedAt   DateTime? @map("started_at")
+  completedAt DateTime? @map("completed_at")
+
+  // File tracking
+  downloadedFile     String? @map("downloaded_file")
+  stagingFilePath    String? @map("staging_file_path")
+  importBatchId      String? @map("import_batch_id")
+
+  // Result counters
+  filesProcessed   Int @default(0) @map("files_processed")
+  recordsProcessed Int @default(0) @map("records_processed")
+  recordsSucceeded Int @default(0) @map("records_succeeded")
+  recordsFailed    Int @default(0) @map("records_failed")
+
+  // Error tracking
+  errorMessage String? @map("error_message")
+  errorDetails Json?   @map("error_details")
+
+  // Retry tracking
+  retryCount    Int @default(0) @map("retry_count")
+  maxRetries    Int @default(3) @map("max_retries")
+
+  // Lock mechanism (prevent duplicate runs)
+  lockedAt   DateTime? @map("locked_at")
+  lockedBy   String?   @map("locked_by") // Worker ID
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  schedule AutomationSchedule? @relation(fields: [scheduleId], references: [id], onDelete: SetNull)
+
+  @@index([scheduleId])
+  @@index([status])
+  @@index([jobType])
+  @@index([createdAt])
+  @@index([lockedAt])
+  @@map("automation_jobs")
 }

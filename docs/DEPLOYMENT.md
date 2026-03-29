@@ -2,7 +2,7 @@
 
 ## Overview
 
-CRM Analiz uses **host-native systemd services** for production deployment. No Docker or containers.
+CRM Analiz uses **host-native systemd services** for production deployment.
 
 **Architecture:**
 
@@ -513,9 +513,9 @@ Use the standard deployment script - it handles graceful restarts:
 
 ---
 
-## Legacy Docker Files
+## Architecture Notes
 
-Previous Docker-based deployment files are archived in `archive/legacy-docker/` for historical reference only. Production uses native systemd services exclusively.
+Production uses native systemd services exclusively for optimal performance and simplicity.
 
 ---
 

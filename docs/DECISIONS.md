@@ -537,35 +537,36 @@ Use Husky for git hooks and lint-staged for pre-commit checks.
 
 ---
 
-## ADR-015: Docker for Local Development
+## ADR-015: Native Services for Development
 
-**Date:** 2026-03-25
-**Status:** Accepted
+**Date:** 2026-03-25 (Updated: 2026-03-29)
+**Status:** Superseded → Native Deployment
 
 ### Context
 
-Need consistent development environment across team.
+Need consistent development environment across team and production.
 
 ### Decision
 
-Provide Docker Compose setup for PostgreSQL, Redis, and optional full stack.
+Use native PostgreSQL and Redis installations for both development and production. Production runs on systemd services.
 
 ### Alternatives Considered
 
-- **Local installation only:** Inconsistent across machines
-- **Docker only:** Forces everyone to use Docker
+- **Local installation only:** ✅ Selected - consistent with production
+- **Containers:** Initially considered, later removed for production simplicity
 
 ### Consequences
 
 **Positive:**
 
-- Consistent environment
-- Easy setup
-- Matches production closer
+- Development matches production exactly
+- No container overhead
+- Simpler deployment model
+- Standard OS tooling (systemd, PostgreSQL, Redis)
 
 **Negative:**
 
-- Requires Docker installation
+- Requires native installation per machine
 - Some prefer local services
 - Slight performance overhead on some systems
 

@@ -19,23 +19,22 @@ echo "Database: $RESTORE_DB_NAME"
 echo "Host: $DB_HOST:$DB_PORT"
 echo ""
 
+# Check for PostgreSQL client
+if ! command -v psql &> /dev/null; then
+    echo "❌ Error: psql not found"
+    echo "   Install: apt install postgresql-client"
+    exit 1
+fi
+
 # Helper function for psql execution
 run_query() {
-    if command -v psql &> /dev/null; then
-        PGPASSWORD="$DB_PASSWORD" psql \
-            -h "$DB_HOST" \
-            -p "$DB_PORT" \
-            -U "$DB_USER" \
-            -d "$RESTORE_DB_NAME" \
-            -t \
-            -c "$1"
-    elif docker compose ps | grep -q postgres; then
-        docker compose exec -T -e PGPASSWORD="$DB_PASSWORD" postgres \
-            psql -U "$DB_USER" -d "$RESTORE_DB_NAME" -t -c "$1"
-    else
-        echo "❌ No PostgreSQL access method"
-        exit 1
-    fi
+    PGPASSWORD="$DB_PASSWORD" psql \
+        -h "$DB_HOST" \
+        -p "$DB_PORT" \
+        -U "$DB_USER" \
+        -d "$RESTORE_DB_NAME" \
+        -t \
+        -c "$1"
 }
 
 # 1. Test connection

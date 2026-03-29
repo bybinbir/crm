@@ -70,15 +70,11 @@ fi
 
 log "⏹️  Stopping current services..."
 
-if [ "${USE_DOCKER:-true}" = "true" ] && command -v docker &> /dev/null; then
-    docker compose -f compose.prod.yaml down || warn "⚠️  Docker compose down failed"
+if command -v systemctl &> /dev/null; then
+    sudo systemctl stop crmanaliz-api || warn "⚠️  Failed to stop API"
+    sudo systemctl stop crmanaliz-web || warn "⚠️  Failed to stop Web"
 else
-    if command -v systemctl &> /dev/null; then
-        sudo systemctl stop crmanaliz-api || warn "⚠️  Failed to stop API"
-        sudo systemctl stop crmanaliz-web || warn "⚠️  Failed to stop Web"
-    else
-        warn "⚠️  systemctl not available, manual service stop required"
-    fi
+    error "❌ systemctl not available - cannot stop services"
 fi
 
 # ============================================================================
@@ -119,18 +115,12 @@ fi
 log "🚀 Starting services with previous version..."
 cd "$PROJECT_ROOT"
 
-if [ "${USE_DOCKER:-true}" = "true" ] && command -v docker &> /dev/null; then
-    docker compose -f compose.prod.yaml build || error "❌ Docker build failed"
-    docker compose -f compose.prod.yaml up -d || error "❌ Docker start failed"
-    sleep 15
+if command -v systemctl &> /dev/null; then
+    sudo systemctl start crmanaliz-api || error "❌ Failed to start API"
+    sudo systemctl start crmanaliz-web || error "❌ Failed to start Web"
+    sleep 10
 else
-    if command -v systemctl &> /dev/null; then
-        sudo systemctl start crmanaliz-api || error "❌ Failed to start API"
-        sudo systemctl start crmanaliz-web || error "❌ Failed to start Web"
-        sleep 10
-    else
-        error "❌ No service manager available for restart"
-    fi
+    error "❌ systemctl not available - cannot start services"
 fi
 
 # ============================================================================

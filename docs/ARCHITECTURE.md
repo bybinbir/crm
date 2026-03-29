@@ -347,7 +347,7 @@ User Browser
 
 ```
 Developer Machine
-  ├── Docker Compose
+  ├── Native Services
   │   ├── PostgreSQL (local)
   │   ├── Redis (local)
   │   ├── API (hot reload)

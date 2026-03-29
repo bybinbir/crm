@@ -50,67 +50,44 @@ if [ "$RESTORE_DB_NAME" == "crmanaliz" ]; then
     fi
 fi
 
-# Method 1: Direct host PostgreSQL
-if command -v psql &> /dev/null && command -v pg_restore &> /dev/null; then
-    echo "🗑️  Dropping existing test database (if exists)..."
-    PGPASSWORD="$DB_PASSWORD" psql \
-        -h "$DB_HOST" \
-        -p "$DB_PORT" \
-        -U "$DB_USER" \
-        -d postgres \
-        -c "DROP DATABASE IF EXISTS $RESTORE_DB_NAME;" \
-        2>/dev/null || true
-
-    echo "🆕 Creating fresh test database..."
-    PGPASSWORD="$DB_PASSWORD" psql \
-        -h "$DB_HOST" \
-        -p "$DB_PORT" \
-        -U "$DB_USER" \
-        -d postgres \
-        -c "CREATE DATABASE $RESTORE_DB_NAME;"
-
-    echo "📥 Restoring from backup..."
-    PGPASSWORD="$DB_PASSWORD" pg_restore \
-        -h "$DB_HOST" \
-        -p "$DB_PORT" \
-        -U "$DB_USER" \
-        -d "$RESTORE_DB_NAME" \
-        --clean \
-        --if-exists \
-        --no-owner \
-        --no-privileges \
-        --verbose \
-        "$BACKUP_FILE"
-
-    echo "✅ Restore completed via host tools"
-
-# Method 2: Docker container
-elif docker ps | grep -q crmanaliz-postgres || docker compose ps | grep -q postgres; then
-    echo "🗑️  Dropping existing test database (if exists)..."
-
-    if docker compose ps | grep -q postgres; then
-        docker compose exec -T -e PGPASSWORD="$DB_PASSWORD" postgres \
-            psql -U "$DB_USER" -d postgres \
-            -c "DROP DATABASE IF EXISTS $RESTORE_DB_NAME;" \
-            2>/dev/null || true
-
-        echo "🆕 Creating fresh test database..."
-        docker compose exec -T -e PGPASSWORD="$DB_PASSWORD" postgres \
-            psql -U "$DB_USER" -d postgres \
-            -c "CREATE DATABASE $RESTORE_DB_NAME;"
-
-        echo "📥 Restoring from backup..."
-        cat "$BACKUP_FILE" | docker compose exec -T -e PGPASSWORD="$DB_PASSWORD" postgres \
-            pg_restore -U "$DB_USER" -d "$RESTORE_DB_NAME" \
-            --clean --if-exists --no-owner --no-privileges --verbose
-
-        echo "✅ Restore completed via docker compose"
-    fi
-
-else
-    echo "❌ Error: No PostgreSQL access method available"
+# Check for PostgreSQL client tools
+if ! command -v psql &> /dev/null || ! command -v pg_restore &> /dev/null; then
+    echo "❌ Error: PostgreSQL client tools not found"
+    echo "   Install: apt install postgresql-client"
     exit 1
 fi
+
+echo "🗑️  Dropping existing test database (if exists)..."
+PGPASSWORD="$DB_PASSWORD" psql \
+    -h "$DB_HOST" \
+    -p "$DB_PORT" \
+    -U "$DB_USER" \
+    -d postgres \
+    -c "DROP DATABASE IF EXISTS $RESTORE_DB_NAME;" \
+    2>/dev/null || true
+
+echo "🆕 Creating fresh test database..."
+PGPASSWORD="$DB_PASSWORD" psql \
+    -h "$DB_HOST" \
+    -p "$DB_PORT" \
+    -U "$DB_USER" \
+    -d postgres \
+    -c "CREATE DATABASE $RESTORE_DB_NAME;"
+
+echo "📥 Restoring from backup..."
+PGPASSWORD="$DB_PASSWORD" pg_restore \
+    -h "$DB_HOST" \
+    -p "$DB_PORT" \
+    -U "$DB_USER" \
+    -d "$RESTORE_DB_NAME" \
+    --clean \
+    --if-exists \
+    --no-owner \
+    --no-privileges \
+    --verbose \
+    "$BACKUP_FILE"
+
+echo "✅ Restore completed successfully"
 
 echo ""
 echo "✅ Restore Complete!"

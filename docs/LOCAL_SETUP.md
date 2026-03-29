@@ -1,78 +1,121 @@
 # Local Development Setup
 
-## ⚠️ CRITICAL REQUIREMENT
-
-**Docker Desktop (or equivalent) MUST be installed and running to use this application.**
-
-Without Docker/PostgreSQL/Redis:
-
-- ❌ Cannot run migrations
-- ❌ Cannot seed database
-- ❌ Cannot start API server (DATABASE_URL required)
-- ❌ Cannot test login flow
-- ❌ Cannot verify any UI functionality
-
-**If Docker is not available:** Install Docker Desktop for your platform:
-
-- Windows: https://docs.docker.com/desktop/install/windows-install/
-- Mac: https://docs.docker.com/desktop/install/mac-install/
-- Linux: https://docs.docker.com/engine/install/
-
 ## Prerequisites
 
 - Node.js >=20.0.0
 - pnpm >=9.0.0
-- PostgreSQL 16+ (via Docker or local installation)
-- Redis 7+ (via Docker or local installation)
+- PostgreSQL 16+
+- Redis 7+
 
-## Option 1: Docker Compose (Recommended)
+## Installation
 
-### 1. Start Services
+### 1. Install PostgreSQL and Redis
+
+**Ubuntu/Debian:**
 
 ```bash
-# Start PostgreSQL and Redis only
-docker compose up -d postgres redis
-
-# Or start all services including API and Web
-docker compose up -d
+sudo apt update
+sudo apt install postgresql-16 redis-server
+sudo systemctl start postgresql
+sudo systemctl start redis-server
 ```
 
-### 2. Verify Services
+**macOS (Homebrew):**
 
 ```bash
-# Check services are running
-docker compose ps
+brew install postgresql@16 redis
+brew services start postgresql@16
+brew services start redis
+```
 
+**Windows:**
+
+- PostgreSQL: https://www.postgresql.org/download/windows/
+- Redis: https://github.com/microsoftarchive/redis/releases
+
+### 2. Create Database
+
+```bash
+# Connect as postgres user
+sudo -u postgres psql
+
+# Create user and database
+CREATE USER crmanaliz WITH PASSWORD 'dev_password';
+CREATE DATABASE crmanaliz OWNER crmanaliz;
+\q
+```
+
+### 3. Verify Services
+
+```bash
 # Check PostgreSQL
-docker exec -it crmanaliz-postgres psql -U crmanaliz -d crmanaliz -c "SELECT 1;"
+psql -U crmanaliz -d crmanaliz -h localhost -c "SELECT 1;"
 
 # Check Redis
-docker exec -it crmanaliz-redis redis-cli ping
+redis-cli ping
+# Should return PONG
 ```
 
-### 3. Run Migrations
+### 4. Install Node Dependencies
+
+```bash
+# From project root
+pnpm install
+```
+
+### 5. Environment Configuration
+
+```bash
+# Copy example environment file
+cp .env.example .env.local
+
+# Edit .env.local with your values
+# Ensure DATABASE_URL and REDIS_URL point to your local services
+```
+
+Example `.env.local`:
+
+```bash
+NODE_ENV=development
+PORT=4000
+
+# Database
+DATABASE_URL=postgresql://crmanaliz:dev_password@localhost:5432/crmanaliz
+
+# Redis
+REDIS_URL=redis://localhost:6379
+
+# JWT
+JWT_SECRET=your-secret-min-32-chars-random-string
+JWT_REFRESH_SECRET=another-secret-min-32-chars-random
+ENCRYPTION_KEY=development-encryption-key-min-32-chars-for-testing-purposes
+```
+
+### 6. Run Database Migrations
 
 ```bash
 cd apps/api
 npx prisma migrate dev
+cd ../..
 ```
 
-### 4. Seed Database
+### 7. Seed Database
 
 ```bash
 cd apps/api
 npx prisma db seed
+cd ../..
 ```
 
 Default admin credentials:
 
-- Email: `admin@crmanaliz.local`
-- Password: `Admin123!`
+- Email: admin@bullvar.com
+- Password: Admin2025!Bullvar
 
-### 5. Start Development Servers
+### 8. Start Development Servers
 
 ```bash
-# From project root
+# Start all apps
 pnpm dev
 ```
 
@@ -88,50 +131,130 @@ cd apps/web
 pnpm dev
 ```
 
-### 6. Access Applications
+Access:
 
 - Web: http://localhost:3000
 - API: http://localhost:4000/api/v1
-- API Health: http://localhost:4000/api/v1/health
+- API Docs: http://localhost:4000/api/docs
 
-## Option 2: Manual PostgreSQL/Redis Setup
+## Troubleshooting
 
-If you have PostgreSQL and Redis installed locally without Docker:
-
-### 1. Create Database
+### Database Connection Error
 
 ```bash
-createdb crmanaliz
-createuser crmanaliz
-psql -c "ALTER USER crmanaliz WITH PASSWORD 'dev_password';"
-psql -c "GRANT ALL PRIVILEGES ON DATABASE crmanaliz TO crmanaliz;"
+# Check PostgreSQL is running
+# Linux
+sudo systemctl status postgresql
+
+# macOS
+brew services list | grep postgresql
+
+# Test connection
+psql -U crmanaliz -d crmanaliz -h localhost -p 5432
 ```
 
-### 2. Configure Environment
+Verify DATABASE_URL in `.env.local` is correct.
 
-Ensure `apps/api/.env` has correct DATABASE_URL:
+### Redis Connection Error
+
+```bash
+# Check Redis is running
+# Linux
+sudo systemctl status redis-server
+
+# macOS
+brew services list | grep redis
+
+# Test connection
+redis-cli ping
+# Should return PONG
+```
+
+### Migration Errors
+
+```bash
+cd apps/api
+
+# Check migration status
+npx prisma migrate status
+
+# Reset database (WARNING: deletes all data)
+npx prisma migrate reset
+
+# Run migrations again
+npx prisma migrate dev
+```
+
+### Port Already in Use
+
+```bash
+# Check what's using port 3000 or 4000
+# Linux/macOS
+lsof -i :3000
+lsof -i :4000
+
+# Windows
+netstat -ano | findstr :3000
+netstat -ano | findstr :4000
+
+# Kill the process or change port in .env.local
+```
+
+### Build Issues
+
+**Error: "ENCRYPTION_KEY environment variable is not set"**
+
+Add to `apps/api/.env`:
 
 ```env
-DATABASE_URL=postgresql://crmanaliz:dev_password@localhost:5432/crmanaliz
+ENCRYPTION_KEY=development-encryption-key-min-32-chars-for-testing-purposes
 ```
 
-### 3. Start Redis
+**Error: "JWT secrets not set"**
 
-```bash
-redis-server
+Add to `apps/api/.env`:
+
+```env
+JWT_ACCESS_SECRET=development-jwt-access-secret-change-in-production-min-32
+JWT_REFRESH_SECRET=development-jwt-refresh-secret-change-in-production-min-32
 ```
 
-Or with password:
+## Development Commands
+
+### Root Level
 
 ```bash
-redis-server --requirepass dev_password_change_in_production
+pnpm dev          # Start all apps in dev mode
+pnpm build        # Build all apps
+pnpm lint         # Lint all apps
+pnpm typecheck    # TypeScript check all apps
+pnpm test         # Run all tests
+pnpm clean        # Clean build artifacts
 ```
 
-### 4. Follow steps 3-6 from Option 1
-
-## Prisma Commands
+### API Only
 
 ```bash
+cd apps/api
+pnpm dev                # Start NestJS dev server
+pnpm build              # Build API
+pnpm start:prod         # Start production build
+```
+
+### Web Only
+
+```bash
+cd apps/web
+pnpm dev          # Start Next.js dev server
+pnpm build        # Build web app
+pnpm start        # Start production build
+```
+
+### Prisma Commands
+
+```bash
+cd apps/api
+
 # Generate Prisma Client
 npx prisma generate
 
@@ -151,61 +274,6 @@ npx prisma db seed
 npx prisma studio
 ```
 
-## Troubleshooting
-
-### Docker Compose Issues
-
-**Error: "docker: command not found"**
-
-- Install Docker Desktop for Windows/Mac
-- Ensure Docker service is running
-
-**Error: "port already allocated"**
-
-- Check if PostgreSQL/Redis already running locally
-- Stop local instances or change ports in compose.yaml
-
-### Migration Issues
-
-**Error: "Can't reach database server"**
-
-- Verify DATABASE_URL is correct
-- Check PostgreSQL is running: `docker compose ps` or `psql -h localhost -U crmanaliz`
-
-**Error: "relation does not exist"**
-
-- Run migrations: `npx prisma migrate dev`
-- Or reset: `npx prisma migrate reset` (DELETES DATA)
-
-### Seed Issues
-
-**Error: "Cannot find module"**
-
-- Ensure dependencies installed: `pnpm install`
-- Check prisma client generated: `npx prisma generate`
-
-**Error: "Admin user already exists"**
-
-- This is expected if seed already ran
-- To recreate, reset database first: `npx prisma migrate reset`
-
-### Build Issues
-
-**Error: "ENCRYPTION_KEY environment variable is not set"**
-
-- Add to `apps/api/.env`:
-  ```env
-  ENCRYPTION_KEY=development-encryption-key-min-32-chars-for-testing-purposes
-  ```
-
-**Error: "JWT secrets not set"**
-
-- Add to `apps/api/.env`:
-  ```env
-  JWT_ACCESS_SECRET=development-jwt-access-secret-change-in-production-min-32
-  JWT_REFRESH_SECRET=development-jwt-refresh-secret-change-in-production-min-32
-  ```
-
 ## Environment Variables
 
 ### Required for API
@@ -223,8 +291,8 @@ JWT_REFRESH_SECRET=development-jwt-refresh-secret-change-in-production-min-32
 PORT=4000
 NODE_ENV=development
 REDIS_URL=redis://localhost:6379
-DEFAULT_ADMIN_EMAIL=admin@crmanaliz.local
-DEFAULT_ADMIN_PASSWORD=Admin123!
+DEFAULT_ADMIN_EMAIL=admin@bullvar.com
+DEFAULT_ADMIN_PASSWORD=Admin2025!Bullvar
 ```
 
 ### Required for Web
@@ -235,44 +303,59 @@ NEXT_PUBLIC_API_URL=http://localhost:4000/api/v1
 
 ## Verification Checklist
 
-After setup, verify everything works:
+Before considering setup complete:
 
-- [ ] `pnpm typecheck` passes
-- [ ] `pnpm lint` passes
-- [ ] `pnpm test` passes
-- [ ] `pnpm build` succeeds
-- [ ] PostgreSQL accessible (psql or Docker)
-- [ ] Redis accessible (redis-cli or Docker)
-- [ ] Migrations applied (`npx prisma migrate status`)
-- [ ] Admin user seeded (check with Prisma Studio)
-- [ ] API starts without errors (`pnpm --filter @crmanaliz/api dev`)
-- [ ] Web starts without errors (`pnpm --filter @crmanaliz/web dev`)
-- [ ] Login page loads (http://localhost:3000/login)
+- [ ] PostgreSQL running and accessible
+- [ ] Redis running and accessible
+- [ ] `pnpm install` completed without errors
+- [ ] Database migrations applied
+- [ ] Admin user seeded
+- [ ] `pnpm dev` starts all services
+- [ ] Web app loads at http://localhost:3000
+- [ ] API health check at http://localhost:4000/api/v1/health
 - [ ] Can login with admin credentials
 - [ ] Dashboard loads after login
 - [ ] Audit logs visible
 - [ ] Integration config page accessible
+- [ ] `pnpm typecheck` passes
+- [ ] `pnpm lint` passes
+- [ ] `pnpm test` passes
+- [ ] `pnpm build` succeeds
 
-## Clean Reset
+## Clean Slate Reset
 
-To completely reset local environment:
+If you need to start completely fresh:
 
 ```bash
 # Stop all services
-docker compose down -v
+sudo systemctl stop postgresql redis-server  # Linux
+brew services stop postgresql@16 redis       # macOS
 
 # Clean build artifacts
 pnpm clean
+rm -rf node_modules pnpm-lock.yaml
+rm -rf apps/*/node_modules
+rm -rf packages/*/node_modules
 
-# Reinstall dependencies
-rm -rf node_modules apps/*/node_modules packages/*/node_modules
-pnpm install
+# Drop and recreate database
+sudo -u postgres psql -c "DROP DATABASE IF EXISTS crmanaliz;"
+sudo -u postgres psql -c "CREATE DATABASE crmanaliz OWNER crmanaliz;"
 
 # Start fresh
-docker compose up -d postgres redis
+sudo systemctl start postgresql redis-server  # Linux
+brew services start postgresql@16 redis       # macOS
+
+pnpm install
 cd apps/api
 npx prisma migrate dev
 npx prisma db seed
 cd ../..
 pnpm dev
 ```
+
+## Next Steps
+
+- Review [ENVIRONMENT.md](ENVIRONMENT.md) for detailed environment configuration
+- Review [ARCHITECTURE.md](ARCHITECTURE.md) to understand system design
+- Review [GIT_WORKFLOW.md](GIT_WORKFLOW.md) for branching strategy
+- Start building features!

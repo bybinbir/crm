@@ -9,81 +9,73 @@ RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
+# Database credentials
+DB_HOST="${DB_HOST:-localhost}"
+DB_PORT="${DB_PORT:-5432}"
+DB_NAME="${DB_NAME:-crmanaliz}"
+DB_USER="${DB_USER:-crmanaliz}"
+DB_PASSWORD="${DB_PASSWORD}"
+
 echo "=== CRM Analiz Platform - Deployment Validation ==="
 echo ""
 
-# Test 1: Docker
-echo -n "Checking Docker... "
-if docker --version > /dev/null 2>&1; then
-    echo -e "${GREEN}✓${NC} $(docker --version)"
-else
-    echo -e "${RED}✗${NC} Docker not found"
-    exit 1
-fi
+# Test 1: Systemd Services
+echo -n "Checking systemd services... "
+EXPECTED_SERVICES=("crm-analiz-api" "crm-analiz-web")
+ALL_ACTIVE=true
 
-# Test 2: Docker Compose
-echo -n "Checking Docker Compose... "
-if docker compose version > /dev/null 2>&1; then
-    echo -e "${GREEN}✓${NC} $(docker compose version --short)"
-else
-    echo -e "${RED}✗${NC} Docker Compose not found"
-    exit 1
-fi
-
-# Test 3: Containers Running
-echo -n "Checking containers... "
-EXPECTED_CONTAINERS=("crmanaliz-postgres" "crmanaliz-redis" "crmanaliz-api" "crmanaliz-web")
-ALL_RUNNING=true
-
-for container in "${EXPECTED_CONTAINERS[@]}"; do
-    if ! docker ps --format '{{.Names}}' | grep -q "^${container}$"; then
-        echo -e "${RED}✗${NC} Container ${container} not running"
-        ALL_RUNNING=false
+for service in "${EXPECTED_SERVICES[@]}"; do
+    if ! systemctl is-active --quiet "$service"; then
+        echo -e "${RED}✗${NC} Service ${service} not active"
+        ALL_ACTIVE=false
     fi
 done
 
-if [ "$ALL_RUNNING" = true ]; then
-    echo -e "${GREEN}✓${NC} All containers running"
+if [ "$ALL_ACTIVE" = true ]; then
+    echo -e "${GREEN}✓${NC} All services active"
 else
-    echo -e "${RED}✗${NC} Some containers missing"
-    docker compose ps
+    echo -e "${RED}✗${NC} Some services not running"
+    systemctl status crm-analiz-api crm-analiz-web
+    exit 1
 fi
 
-# Test 4: PostgreSQL Health
+# Test 2: PostgreSQL Health
 echo -n "Checking PostgreSQL... "
-if docker exec crmanaliz-postgres pg_isready -U crmanaliz > /dev/null 2>&1; then
+if PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1;" > /dev/null 2>&1; then
     echo -e "${GREEN}✓${NC} PostgreSQL healthy"
 else
     echo -e "${RED}✗${NC} PostgreSQL not ready"
+    exit 1
 fi
 
-# Test 5: Redis Health
+# Test 3: Redis Health
 echo -n "Checking Redis... "
-if docker exec crmanaliz-redis redis-cli ping 2>&1 | grep -q "PONG"; then
+if redis-cli ping 2>&1 | grep -q "PONG"; then
     echo -e "${GREEN}✓${NC} Redis healthy"
 else
     echo -e "${RED}✗${NC} Redis not ready"
+    exit 1
 fi
 
-# Test 6: Database Tables
+# Test 4: Database Tables
 echo -n "Checking database tables... "
-TABLE_COUNT=$(docker exec crmanaliz-postgres psql -U crmanaliz -d crmanaliz -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';" 2>/dev/null | tr -d ' ')
+TABLE_COUNT=$(PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';" 2>/dev/null | tr -d ' ')
 if [ "$TABLE_COUNT" -ge 10 ]; then
     echo -e "${GREEN}✓${NC} $TABLE_COUNT tables found"
 else
     echo -e "${RED}✗${NC} Only $TABLE_COUNT tables (expected 11+)"
 fi
 
-# Test 7: Admin User
+# Test 5: Admin User
 echo -n "Checking admin user... "
-ADMIN_EXISTS=$(docker exec crmanaliz-postgres psql -U crmanaliz -d crmanaliz -t -c "SELECT COUNT(*) FROM users WHERE role = 'SUPER_ADMIN';" 2>/dev/null | tr -d ' ')
+ADMIN_EXISTS=$(PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT COUNT(*) FROM users WHERE role = 'SUPER_ADMIN';" 2>/dev/null | tr -d ' ')
 if [ "$ADMIN_EXISTS" -ge 1 ]; then
     echo -e "${GREEN}✓${NC} Admin user exists"
 else
     echo -e "${RED}✗${NC} No admin user found"
 fi
 
-# Test 8: API Health Endpoint
+# Test 6: API Health Endpoint
 echo -n "Checking API health endpoint... "
 if curl -s http://localhost:4000/api/v1/health | grep -q "ok"; then
     echo -e "${GREEN}✓${NC} API health OK"
@@ -91,7 +83,7 @@ else
     echo -e "${RED}✗${NC} API health check failed"
 fi
 
-# Test 9: Login Endpoint
+# Test 7: Login Endpoint
 echo -n "Checking login endpoint... "
 LOGIN_RESPONSE=$(curl -s -X POST http://localhost:4000/api/v1/auth/login \
     -H "Content-Type: application/json" \
@@ -104,7 +96,7 @@ else
     echo -e "${RED}✗${NC} Login failed"
 fi
 
-# Test 10: Web Application
+# Test 8: Web Application
 echo -n "Checking web application... "
 WEB_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/)
 if [ "$WEB_STATUS" = "200" ] || [ "$WEB_STATUS" = "307" ]; then
@@ -113,7 +105,7 @@ else
     echo -e "${RED}✗${NC} Web app error (HTTP $WEB_STATUS)"
 fi
 
-# Test 11: Audit Logs (if login succeeded)
+# Test 9: Audit Logs (if login succeeded)
 if [ -n "$ACCESS_TOKEN" ]; then
     echo -n "Checking audit logs... "
     AUDIT_LOGS=$(curl -s http://localhost:4000/api/v1/audit-logs \

@@ -24,9 +24,8 @@ CRM Analiz, ISSmanager'ın üzerine oturan bir **analitik ve karar destek katman
 
 - Node.js >=20.0.0
 - pnpm >=9.0.0
-- Docker (opsiyonel, önerilen)
-- PostgreSQL 16+ (Docker ile sağlanır)
-- Redis 7+ (Docker ile sağlanır)
+- PostgreSQL 16+
+- Redis 7+
 
 ### Kurulum
 
@@ -50,13 +49,31 @@ cp .env.example .env.local
 # .env.local dosyasını gerçek değerlerle düzenleyin
 ```
 
-4. **Docker ile servisleri başlatın** (Önerilen)
+4. **PostgreSQL ve Redis'i başlatın**
 
 ```bash
-docker compose up -d postgres redis
+# Ubuntu/Debian
+sudo systemctl start postgresql
+sudo systemctl start redis-server
+
+# Veya geliştirme için
+sudo apt install postgresql-16 redis-server
 ```
 
-5. **Geliştirme sunucularını başlatın**
+5. **Veritabanını hazırlayın**
+
+```bash
+# PostgreSQL kullanıcısı ve veritabanı oluştur
+sudo -u postgres psql -c "CREATE USER crmanaliz WITH PASSWORD 'dev_password';"
+sudo -u postgres psql -c "CREATE DATABASE crmanaliz OWNER crmanaliz;"
+
+# Migrations çalıştır
+cd apps/api
+pnpm run migration:run
+cd ../..
+```
+
+6. **Geliştirme sunucularını başlatın**
 
 ```bash
 pnpm dev
@@ -64,12 +81,6 @@ pnpm dev
 
 - Web: http://localhost:3000
 - API: http://localhost:4000/api/v1
-
-### Alternatif: Tüm Stack Docker ile
-
-```bash
-docker compose up
-```
 
 ## 📁 Proje Yapısı
 
@@ -132,7 +143,7 @@ pnpm start        # Production server
 | Önbellek   | Redis                | 7+           |
 | Test       | Jest                 | 29+          |
 | CI/CD      | GitHub Actions       | -            |
-| Konteyner  | Docker               | -            |
+| Deployment | systemd              | -            |
 
 Detaylı bilgi için: [docs/STACK.md](docs/STACK.md)
 

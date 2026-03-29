@@ -5,6 +5,11 @@ set -e
 # Restores PostgreSQL database from backup file
 
 BACKUP_DIR="${BACKUP_DIR:-/opt/crm-analiz/backups}"
+DB_HOST="${DB_HOST:-localhost}"
+DB_PORT="${DB_PORT:-5432}"
+DB_NAME="${DB_NAME:-crmanaliz}"
+DB_USER="${DB_USER:-crmanaliz}"
+DB_PASSWORD="${DB_PASSWORD}"
 
 # Check if backup file provided
 if [ -z "$1" ]; then
@@ -27,6 +32,13 @@ if [ ! -f "$BACKUP_FILE" ]; then
     exit 1
 fi
 
+# Check for PostgreSQL client
+if ! command -v psql &> /dev/null; then
+    echo "❌ Error: psql not found"
+    echo "   Install: apt install postgresql-client"
+    exit 1
+fi
+
 echo "🔄 Starting database restore..."
 echo "📁 Backup file: $BACKUP_FILE"
 
@@ -39,11 +51,11 @@ fi
 
 # Extract backup and restore to PostgreSQL
 echo "📦 Restoring PostgreSQL database..."
-gunzip -c "$BACKUP_FILE" | docker compose -f compose.prod.yaml exec -T postgres psql -U crmanaliz crmanaliz
+gunzip -c "$BACKUP_FILE" | PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" "$DB_NAME"
 
 # Verify restore
 echo "✓ Checking restored database..."
-TABLE_COUNT=$(docker compose -f compose.prod.yaml exec -T postgres psql -U crmanaliz crmanaliz -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';" | tr -d ' ')
+TABLE_COUNT=$(PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" "$DB_NAME" -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';" | tr -d ' ')
 
 if [ "$TABLE_COUNT" -gt 0 ]; then
     echo "✅ Restore complete!"
@@ -55,6 +67,6 @@ fi
 
 # Restart services to clear connections
 echo "🔄 Restarting services..."
-docker compose -f compose.prod.yaml restart api
+systemctl restart crm-analiz-api
 
 echo "✅ Database restore complete!"

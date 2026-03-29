@@ -4,20 +4,22 @@
 
 ### Required Software
 
-| Software | Minimum Version | Recommended Version | Purpose                     |
-| -------- | --------------- | ------------------- | --------------------------- |
-| Node.js  | 20.0.0          | 20.11+ (LTS)        | Runtime                     |
-| pnpm     | 9.0.0           | 9.15+               | Package manager             |
-| Git      | 2.30+           | Latest              | Version control             |
-| Docker   | 20.10+          | Latest              | Containerization (optional) |
-| VS Code  | Latest          | Latest              | IDE (recommended)           |
+| Software   | Minimum Version | Recommended Version | Purpose           |
+| ---------- | --------------- | ------------------- | ----------------- |
+| Node.js    | 20.0.0          | 20.11+ (LTS)        | Runtime           |
+| pnpm       | 9.0.0           | 9.15+               | Package manager   |
+| Git        | 2.30+           | Latest              | Version control   |
+| PostgreSQL | 16.0            | 16+                 | Database          |
+| Redis      | 7.0             | 7+                  | Cache             |
+| VS Code    | Latest          | Latest              | IDE (recommended) |
 
 ### Installation Links
 
 - **Node.js:** https://nodejs.org/ (Install LTS version)
 - **pnpm:** `npm install -g pnpm` or https://pnpm.io/installation
 - **Git:** https://git-scm.com/downloads
-- **Docker:** https://docs.docker.com/get-docker/
+- **PostgreSQL:** https://www.postgresql.org/download/
+- **Redis:** https://redis.io/docs/getting-started/
 - **VS Code:** https://code.visualstudio.com/
 
 ## Initial Setup
@@ -72,10 +74,10 @@ PORT=4000
 # Web App
 NEXT_PUBLIC_API_URL=http://localhost:4000/api/v1
 
-# Database (if using Docker)
+# Database
 DATABASE_URL=postgresql://crmanaliz:dev_password@localhost:5432/crmanaliz
 
-# Redis (if using Docker)
+# Redis
 REDIS_URL=redis://localhost:6379
 
 # JWT Secrets (generate random strings)
@@ -102,47 +104,47 @@ openssl rand -hex 32
 
 ### 5. Start Services
 
-#### Option A: Docker (Recommended)
+#### PostgreSQL Setup
 
-Start PostgreSQL and Redis:
-
-```bash
-docker compose up -d postgres redis
-```
-
-Check services are running:
+Ubuntu/Debian:
 
 ```bash
-docker compose ps
+sudo apt install postgresql-16
+sudo systemctl start postgresql
+sudo systemctl enable postgresql
+
+# Create user and database
+sudo -u postgres psql -c "CREATE USER crmanaliz WITH PASSWORD 'dev_password';"
+sudo -u postgres psql -c "CREATE DATABASE crmanaliz OWNER crmanaliz;"
 ```
 
-#### Option B: Local Installation
+#### Redis Setup
 
-Install PostgreSQL and Redis locally:
+Ubuntu/Debian:
 
-**macOS (Homebrew):**
+```bash
+sudo apt install redis-server
+sudo systemctl start redis-server
+sudo systemctl enable redis-server
+```
+
+#### macOS (Homebrew)
 
 ```bash
 brew install postgresql@16 redis
 brew services start postgresql@16
 brew services start redis
+
+# Create database
+createdb crmanaliz
 ```
 
-**Ubuntu/Debian:**
+#### Windows
 
-```bash
-sudo apt update
-sudo apt install postgresql-16 redis-server
-sudo systemctl start postgresql
-sudo systemctl start redis
-```
+- **PostgreSQL:** https://www.postgresql.org/download/windows/
+- **Redis:** https://github.com/microsoftarchive/redis/releases
 
-**Windows:**
-
-- PostgreSQL: https://www.postgresql.org/download/windows/
-- Redis: https://github.com/microsoftarchive/redis/releases
-
-Create database:
+Create database after installation:
 
 ```bash
 createdb crmanaliz
@@ -280,10 +282,6 @@ netstat -ano | findstr :4000
 
 ```bash
 # Check PostgreSQL is running
-# Docker
-docker compose ps
-
-# Local
 # macOS
 brew services list | grep postgresql
 
@@ -298,10 +296,6 @@ psql -U crmanaliz -d crmanaliz -h localhost -p 5432
 
 ```bash
 # Check Redis is running
-# Docker
-docker compose ps
-
-# Local
 # macOS
 brew services list | grep redis
 
@@ -366,7 +360,6 @@ code --install-extension bradlc.vscode-tailwindcss
 code --install-extension editorconfig.editorconfig
 code --install-extension eamodio.gitlens
 code --install-extension usernamehw.errorlens
-code --install-extension ms-azuretools.vscode-docker
 ```
 
 ### Workspace Settings
@@ -405,61 +398,6 @@ For integration tests, use a separate test database:
 DATABASE_URL=postgresql://crmanaliz:test_password@localhost:5432/crmanaliz_test
 ```
 
-## Docker Environment
-
-### Full Stack with Docker
-
-Start everything with Docker:
-
-```bash
-docker compose up
-```
-
-This starts:
-
-- PostgreSQL
-- Redis
-- API server (with hot reload)
-- Web app (with hot reload)
-
-### Docker Commands
-
-```bash
-# Start services
-docker compose up -d
-
-# View logs
-docker compose logs -f
-
-# Stop services
-docker compose down
-
-# Rebuild services
-docker compose build
-
-# Remove volumes (warning: deletes data)
-docker compose down -v
-```
-
-### Docker Troubleshooting
-
-```bash
-# Check running containers
-docker compose ps
-
-# Check logs
-docker compose logs api
-docker compose logs web
-docker compose logs postgres
-
-# Restart service
-docker compose restart api
-
-# Shell into container
-docker compose exec api sh
-docker compose exec postgres psql -U crmanaliz
-```
-
 ## Production Build
 
 ### Local Production Build
@@ -475,14 +413,12 @@ cd apps/api && pnpm start:prod
 
 ### Production Deployment
 
-Production uses **host-native systemd services**, not Docker.
+Production uses **host-native systemd services**.
 
 For production deployment, see:
 
 - [DEPLOYMENT.md](DEPLOYMENT.md) - Native systemd deployment guide
 - [docs/ops/RUNBOOK_PRODUCTION.md](ops/RUNBOOK_PRODUCTION.md) - Operations manual
-
-Local development may use Docker for convenience (optional).
 
 ## Next Steps
 

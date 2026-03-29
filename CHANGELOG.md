@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - NestJS API application skeleton
 - Shared TypeScript types package
 - Shared UI components package
-- Docker and docker-compose setup for local development
+- Native PostgreSQL and Redis setup for development
 - PostgreSQL and Redis integration readiness
 - CI/CD pipeline with GitHub Actions
 - Code quality tools (ESLint, Prettier, Husky, commitlint)

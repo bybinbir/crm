@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # CRM Analiz Production Deployment Script
-# Dockerless native systemd deployment
+# Native systemd deployment
 #
 
 set -Eeuo pipefail

@@ -64,8 +64,8 @@ Thumbs.db
 *.tsbuildinfo
 .eslintcache
 
-# Docker
-.dockerignore
+# Deployment
+.deployment
 
 # Misc
 *.pem
@@ -105,4 +105,4 @@ verify-*.py
 *.tar.gz
 *.tar.gz.sha256
 *-migration/
-DOCKERLESS_MIGRATION_BUNDLE.md
+*MIGRATION_BUNDLE.md

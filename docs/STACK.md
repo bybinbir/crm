@@ -6,21 +6,21 @@ CRM Analiz Platform uses modern, production-grade technologies chosen for reliab
 
 ## Stack Summary
 
-| Layer                | Technology   | Version | Purpose                                 |
-| -------------------- | ------------ | ------- | --------------------------------------- |
-| **Build System**     | Turborepo    | 2.3+    | Monorepo build orchestration            |
-| **Package Manager**  | pnpm         | 9.15+   | Fast, disk-efficient package management |
-| **Language**         | TypeScript   | 5.7+    | Type-safe JavaScript                    |
-| **Web Framework**    | Next.js      | 15.1+   | React framework with SSR                |
-| **API Framework**    | NestJS       | 10.4+   | Node.js backend framework               |
-| **UI Library**       | React        | 18.3+   | Component-based UI                      |
-| **Styling**          | Tailwind CSS | 3.4+    | Utility-first CSS                       |
-| **Database**         | PostgreSQL   | 16+     | Relational database                     |
-| **Cache**            | Redis        | 7+      | In-memory data store                    |
-| **Testing**          | Jest         | 29+     | JavaScript testing                      |
-| **Linting**          | ESLint       | 9.18+   | Code quality                            |
-| **Formatting**       | Prettier     | 3.4+    | Code formatting                         |
-| **Containerization** | Docker       | Latest  | Container platform                      |
+| Layer               | Technology   | Version | Purpose                                 |
+| ------------------- | ------------ | ------- | --------------------------------------- |
+| **Build System**    | Turborepo    | 2.3+    | Monorepo build orchestration            |
+| **Package Manager** | pnpm         | 9.15+   | Fast, disk-efficient package management |
+| **Language**        | TypeScript   | 5.7+    | Type-safe JavaScript                    |
+| **Web Framework**   | Next.js      | 15.1+   | React framework with SSR                |
+| **API Framework**   | NestJS       | 10.4+   | Node.js backend framework               |
+| **UI Library**      | React        | 18.3+   | Component-based UI                      |
+| **Styling**         | Tailwind CSS | 3.4+    | Utility-first CSS                       |
+| **Database**        | PostgreSQL   | 16+     | Relational database                     |
+| **Cache**           | Redis        | 7+      | In-memory data store                    |
+| **Testing**         | Jest         | 29+     | JavaScript testing                      |
+| **Linting**         | ESLint       | 9.18+   | Code quality                            |
+| **Formatting**      | Prettier     | 3.4+    | Code formatting                         |
+| **Deployment**      | systemd      | -       | Native process management               |
 
 ## Detailed Stack
 
@@ -243,13 +243,12 @@ CRM Analiz Platform uses modern, production-grade technologies chosen for reliab
 
 ### DevOps
 
-#### Docker
+#### systemd
 
-- **Purpose:** Containerization
-- **Files:**
-  - `Dockerfile` - Multi-stage builds
-  - `compose.yaml` - Local development
-  - `.dockerignore` - Ignore patterns
+- **Purpose:** Native process management for production
+- **Services:**
+  - `crm-analiz-api.service` - API server
+  - `crm-analiz-web.service` - Web application
 
 #### GitHub Actions
 
@@ -271,7 +270,6 @@ CRM Analiz Platform uses modern, production-grade technologies chosen for reliab
   - EditorConfig
   - GitLens
   - Error Lens
-  - Docker
   - Jest Runner
 
 **Configuration:**

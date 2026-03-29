@@ -317,8 +317,8 @@ logs/api/api_YYYYMMDD.log
 logs/web/web_YYYYMMDD.log
 
 # System logs
-/var/log/syslog (systemd services)
-docker logs crmanaliz-api (Docker mode)
+journalctl -u crm-analiz-api -f
+journalctl -u crm-analiz-web -f
 ```
 
 ## Notification System

@@ -28,45 +28,24 @@ echo ""
 # Create backup directory
 mkdir -p "$BACKUP_DIR"
 
-# Method 1: Direct host PostgreSQL
-if command -v pg_dump &> /dev/null; then
-    echo "📦 Creating backup (host pg_dump)..."
-    PGPASSWORD="$DB_PASSWORD" pg_dump \
-        -h "$DB_HOST" \
-        -p "$DB_PORT" \
-        -U "$DB_USER" \
-        -d "$DB_NAME" \
-        -Fc \
-        --verbose \
-        -f "$BACKUP_FILE"
-
-    echo "✅ Backup created via host pg_dump"
-
-# Method 2: Docker container
-elif docker ps | grep -q crmanaliz-postgres || docker compose ps | grep -q postgres; then
-    echo "📦 Creating backup (docker exec)..."
-
-    # Try docker compose first
-    if docker compose ps | grep -q postgres; then
-        docker compose exec -T -e PGPASSWORD="$DB_PASSWORD" postgres \
-            pg_dump -U "$DB_USER" -d "$DB_NAME" -Fc \
-            > "$BACKUP_FILE"
-        echo "✅ Backup created via docker compose"
-
-    # Fallback to direct docker
-    elif docker ps | grep -q crmanaliz-postgres; then
-        docker exec -e PGPASSWORD="$DB_PASSWORD" crmanaliz-postgres \
-            pg_dump -U "$DB_USER" -d "$DB_NAME" -Fc \
-            > "$BACKUP_FILE"
-        echo "✅ Backup created via docker exec"
-    fi
-
-else
-    echo "❌ Error: No PostgreSQL access method available"
-    echo "   - pg_dump not found in PATH"
-    echo "   - Docker container not running"
+# Check for pg_dump
+if ! command -v pg_dump &> /dev/null; then
+    echo "❌ Error: pg_dump not found in PATH"
+    echo "   Install PostgreSQL client tools: apt install postgresql-client"
     exit 1
 fi
+
+echo "📦 Creating backup..."
+PGPASSWORD="$DB_PASSWORD" pg_dump \
+    -h "$DB_HOST" \
+    -p "$DB_PORT" \
+    -U "$DB_USER" \
+    -d "$DB_NAME" \
+    -Fc \
+    --verbose \
+    -f "$BACKUP_FILE"
+
+echo "✅ Backup created successfully"
 
 # Verify backup file
 if [ ! -f "$BACKUP_FILE" ]; then

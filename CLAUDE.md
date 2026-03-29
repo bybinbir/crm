@@ -142,7 +142,7 @@ After ANY correction from user:
 - **Styling:** Tailwind CSS
 - **Testing:** Jest + Testing Library
 - **CI/CD:** GitHub Actions
-- **Containers:** Docker + Compose
+- **Deployment:** systemd
 
 ### Project Structure
 

@@ -6,7 +6,6 @@
     "editorconfig.editorconfig",
     "eamodio.gitlens",
     "usernamehw.errorlens",
-    "ms-azuretools.vscode-docker",
     "firsttris.vscode-jest-runner",
     "orta.vscode-jest"
   ]

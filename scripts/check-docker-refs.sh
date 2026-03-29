@@ -1,8 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # CI Regression Guard: Prevent Docker reintroduction
 # Fails if Docker/container terms found in active operational files
 
-set -e
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -30,8 +30,11 @@ IGNORED_PATHS=(
     "pnpm-lock.yaml"
     "docs/audits/"
     "docs/releases/"
+    "docs/CI_GUARDS.md"
     "task_dash.md"
     "*.bundle"
+    "scripts/check-docker-refs.sh"
+    ".github/workflows/ci.yml"
 )
 
 # Search terms (Docker/container ecosystem)
@@ -47,6 +50,7 @@ trap "rm -f $TEMP_RESULTS" EXIT
 
 # Search in active paths
 for path in "${ACTIVE_PATHS[@]}"; do
+    # shellcheck disable=SC2086
     if [ -e "$path" ] || ls $path >/dev/null 2>&1; then
         git grep -inE "$DOCKER_TERMS" -- "$path" 2>/dev/null >> "$TEMP_RESULTS" || true
     fi
@@ -56,18 +60,20 @@ done
 FILTERED_RESULTS=$(mktemp)
 trap "rm -f $TEMP_RESULTS $FILTERED_RESULTS" EXIT
 
-while IFS= read -r line; do
-    SKIP=0
-    for ignored in "${IGNORED_PATHS[@]}"; do
-        if [[ "$line" == *"$ignored"* ]]; then
-            SKIP=1
-            break
+if [ -s "$TEMP_RESULTS" ]; then
+    while IFS= read -r line; do
+        SKIP=0
+        for ignored in "${IGNORED_PATHS[@]}"; do
+            if [[ "$line" == *"$ignored"* ]]; then
+                SKIP=1
+                break
+            fi
+        done
+        if [ "$SKIP" -eq 0 ]; then
+            echo "$line" >> "$FILTERED_RESULTS"
         fi
-    done
-    if [ $SKIP -eq 0 ]; then
-        echo "$line" >> "$FILTERED_RESULTS"
-    fi
-done < "$TEMP_RESULTS"
+    done < "$TEMP_RESULTS"
+fi
 
 # Check if any matches found
 if [ -s "$FILTERED_RESULTS" ]; then

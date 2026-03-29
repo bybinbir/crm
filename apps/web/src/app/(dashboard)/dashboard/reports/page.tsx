@@ -50,19 +50,31 @@ export default function ReportsPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let mounted = true;
+
     api
       .get('/api/v1/dashboard/reports')
       .then((res) => {
-        setData(res.data);
-        setLoading(false);
+        if (mounted) {
+          setData(res.data);
+          setLoading(false);
+        }
       })
       .catch((err) => {
-        setError(
-          err.response?.data?.message ||
-            'Rapor verileri yüklenirken hata oluştu'
-        );
-        setLoading(false);
+        if (mounted) {
+          console.error('Reports error:', err);
+          setError(
+            err.response?.data?.message ||
+              err.message ||
+              'Rapor verileri yüklenirken hata oluştu'
+          );
+          setLoading(false);
+        }
       });
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   if (loading) {

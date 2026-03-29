@@ -27,18 +27,31 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let mounted = true;
+
     api
       .get('/api/v1/dashboard/metrics')
       .then((res) => {
-        setMetrics(res.data);
-        setLoading(false);
+        if (mounted) {
+          setMetrics(res.data);
+          setLoading(false);
+        }
       })
       .catch((err) => {
-        setError(
-          err.response?.data?.message || 'Metrikler yüklenirken hata oluştu'
-        );
-        setLoading(false);
+        if (mounted) {
+          console.error('Dashboard metrics error:', err);
+          setError(
+            err.response?.data?.message ||
+              err.message ||
+              'Metrikler yüklenirken hata oluştu'
+          );
+          setLoading(false);
+        }
       });
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   if (loading) {

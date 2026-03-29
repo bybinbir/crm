@@ -139,19 +139,6 @@ export default function LoginPage() {
             )}
           </button>
         </form>
-
-        <div className="mt-4 text-center space-y-2">
-          <p className="text-xs text-gray-500">
-            <strong>Test Giriş Bilgileri:</strong>
-          </p>
-          <p className="text-xs text-gray-600">
-            Kullanıcı Adı:{' '}
-            <code className="bg-gray-100 px-2 py-1 rounded">admin</code>
-          </p>
-          <p className="text-xs text-gray-600">
-            Şifre: <code className="bg-gray-100 px-2 py-1 rounded">admin</code>
-          </p>
-        </div>
       </div>
     </div>
   );

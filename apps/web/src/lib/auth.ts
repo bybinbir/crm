@@ -15,19 +15,32 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let mounted = true;
+
     // Cookie-based auth: just try to fetch user
     // Token is sent automatically via HttpOnly cookie
     api
       .post<User>('/api/v1/auth/me')
       .then((res) => {
-        setUser(res.data);
+        if (mounted) {
+          setUser(res.data);
+        }
       })
-      .catch(() => {
-        setUser(null);
+      .catch((err) => {
+        console.error('Auth check error:', err);
+        if (mounted) {
+          setUser(null);
+        }
       })
       .finally(() => {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       });
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const logout = async () => {

@@ -21,20 +21,32 @@ export default function CustomersPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let mounted = true;
+
     api
       .get('/api/v1/customers')
       .then((res) => {
-        const data = res.data.customers || [];
-        setCustomers(Array.isArray(data) ? data : []);
-        setLoading(false);
+        if (mounted) {
+          const data = res.data.customers || [];
+          setCustomers(Array.isArray(data) ? data : []);
+          setLoading(false);
+        }
       })
       .catch((err) => {
-        setError(
-          err.response?.data?.message ||
-            'Müşteri verileri yüklenirken hata oluştu'
-        );
-        setLoading(false);
+        if (mounted) {
+          console.error('Customers error:', err);
+          setError(
+            err.response?.data?.message ||
+              err.message ||
+              'Müşteri verileri yüklenirken hata oluştu'
+          );
+          setLoading(false);
+        }
       });
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   if (loading) {

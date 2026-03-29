@@ -35,9 +35,11 @@ export default function NeighborhoodsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900">Mahalle Dağılımı</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          Mahalle Dağılımı
+        </h1>
         <div className="flex items-center justify-center h-64">
-          <div className="text-gray-500">Yükleniyor...</div>
+          <div className="text-gray-500 dark:text-gray-400">Yükleniyor...</div>
         </div>
       </div>
     );
@@ -46,11 +48,13 @@ export default function NeighborhoodsPage() {
   if (error) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900">Mahalle Dağılımı</h1>
-        <div className="bg-red-50 border-l-4 border-red-400 p-4">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          Mahalle Dağılımı
+        </h1>
+        <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400 dark:border-red-500 p-4">
           <div className="flex">
             <div className="ml-3">
-              <p className="text-sm text-red-700">{error}</p>
+              <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
             </div>
           </div>
         </div>
@@ -61,14 +65,18 @@ export default function NeighborhoodsPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Mahalle Dağılımı</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          Mahalle Dağılımı
+        </h1>
       </div>
 
       {neighborhoods.length === 0 ? (
-        <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+        <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg">
           <div className="px-4 py-12 sm:px-6 text-center">
-            <p className="text-sm text-gray-500">Henüz mahalle verisi yok.</p>
-            <p className="mt-2 text-sm text-gray-500">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Henüz mahalle verisi yok.
+            </p>
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
               CSV import veya ISSmanager senkronizasyonu ile veri ekleyin.
             </p>
           </div>
@@ -77,22 +85,22 @@ export default function NeighborhoodsPage() {
         <>
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
               <div className="p-5">
-                <div className="text-sm font-medium text-gray-500">
+                <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
                   Toplam Mahalle
                 </div>
-                <div className="mt-1 text-3xl font-semibold text-gray-900">
+                <div className="mt-1 text-3xl font-semibold text-gray-900 dark:text-gray-100">
                   {neighborhoods.length}
                 </div>
               </div>
             </div>
-            <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
               <div className="p-5">
-                <div className="text-sm font-medium text-gray-500">
+                <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
                   Toplam Müşteri
                 </div>
-                <div className="mt-1 text-3xl font-semibold text-gray-900">
+                <div className="mt-1 text-3xl font-semibold text-gray-900 dark:text-gray-100">
                   {neighborhoods.reduce((sum, n) => sum + n.customerCount, 0)}
                 </div>
               </div>
@@ -100,31 +108,34 @@ export default function NeighborhoodsPage() {
           </div>
 
           {/* Neighborhood List */}
-          <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+          <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Mahalle
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     İlçe / İl
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Müşteri Sayısı
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {neighborhoods.map((neighborhood) => (
-                  <tr key={neighborhood.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <tr
+                    key={neighborhood.id}
+                    className="hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
                       {neighborhood.name}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                       {neighborhood.district} / {neighborhood.city}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                       {neighborhood.customerCount}
                     </td>
                   </tr>

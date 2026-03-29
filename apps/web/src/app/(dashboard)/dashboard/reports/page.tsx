@@ -80,9 +80,11 @@ export default function ReportsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900">Raporlar</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          Raporlar
+        </h1>
         <div className="flex items-center justify-center h-64">
-          <div className="text-gray-500">Yükleniyor...</div>
+          <div className="text-gray-500 dark:text-gray-400">Yükleniyor...</div>
         </div>
       </div>
     );
@@ -91,11 +93,13 @@ export default function ReportsPage() {
   if (error) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900">Raporlar</h1>
-        <div className="bg-red-50 border-l-4 border-red-400 p-4">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          Raporlar
+        </h1>
+        <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400 dark:border-red-500 p-4">
           <div className="flex">
             <div className="ml-3">
-              <p className="text-sm text-red-700">{error}</p>
+              <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
             </div>
           </div>
         </div>
@@ -106,9 +110,13 @@ export default function ReportsPage() {
   if (!data) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900">Raporlar</h1>
-        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
-          <p className="text-sm text-yellow-700">Veri bulunamadı</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          Raporlar
+        </h1>
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 dark:border-yellow-500 p-4">
+          <p className="text-sm text-yellow-700 dark:text-yellow-300">
+            Veri bulunamadı
+          </p>
         </div>
       </div>
     );
@@ -121,8 +129,10 @@ export default function ReportsPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Raporlar</h1>
-        <span className="text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          Raporlar
+        </h1>
+        <span className="text-sm text-gray-500 dark:text-gray-400">
           Oluşturulma: {formatDate(data.generatedAt)}
         </span>
       </div>
@@ -152,9 +162,9 @@ export default function ReportsPage() {
       </div>
 
       {/* Source Distribution */}
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
         <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             Veri Kaynağı Dağılımı
           </h2>
         </div>
@@ -167,7 +177,7 @@ export default function ReportsPage() {
                     <span className="text-sm font-medium text-gray-700">
                       {source.sourceType}
                     </span>
-                    <span className="text-sm text-gray-500">
+                    <span className="text-sm text-gray-500 dark:text-gray-400">
                       {source.count} batch ({source.percentage}%)
                     </span>
                   </div>
@@ -185,35 +195,43 @@ export default function ReportsPage() {
       </div>
 
       {/* Data Quality Metrics */}
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
         <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Veri Kalitesi</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            Veri Kalitesi
+          </h2>
         </div>
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <div className="text-sm text-gray-500">Toplam Müşteri</div>
-              <div className="text-2xl font-semibold text-gray-900">
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                Toplam Müşteri
+              </div>
+              <div className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
                 {data.dataQuality.totalCustomers}
               </div>
             </div>
             <div>
-              <div className="text-sm text-gray-500">Toplam Mahalle</div>
-              <div className="text-2xl font-semibold text-gray-900">
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                Toplam Mahalle
+              </div>
+              <div className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
                 {data.dataQuality.totalNeighborhoods}
               </div>
             </div>
             <div>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-gray-500 dark:text-gray-400">
                 Mahalle Bilgili Müşteri
               </div>
-              <div className="text-2xl font-semibold text-gray-900">
+              <div className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
                 {data.dataQuality.customersWithNeighborhood}
               </div>
             </div>
             <div>
-              <div className="text-sm text-gray-500">Mahalle Kapsama Oranı</div>
-              <div className="text-2xl font-semibold text-gray-900">
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                Mahalle Kapsama Oranı
+              </div>
+              <div className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
                 {data.dataQuality.neighborhoodCoverageRate}%
               </div>
             </div>
@@ -222,43 +240,43 @@ export default function ReportsPage() {
       </div>
 
       {/* Top Neighborhoods */}
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
         <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             En Çok Müşterili Mahalleler
           </h2>
         </div>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Mahalle
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   İlçe
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Şehir
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Müşteri Sayısı
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {data.dataQuality.topNeighborhoods.map((neighborhood) => (
                 <tr key={neighborhood.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
                     {neighborhood.name}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                     {neighborhood.district}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                     {neighborhood.city}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                     {neighborhood.customerCount}
                   </td>
                 </tr>
@@ -269,64 +287,64 @@ export default function ReportsPage() {
       </div>
 
       {/* Recent Imports */}
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
         <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             Son Import İşlemleri
           </h2>
         </div>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Tarih
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Kaynak
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Dosya
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Başarılı
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Başarısız
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Durum
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {data.importSummary.recentImports.map((importItem) => (
                 <tr key={importItem.batchId}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                     {formatDate(importItem.importedAt)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
                       {importItem.sourceType}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
+                  <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100 max-w-xs truncate">
                     {importItem.fileName}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                     {importItem.successRows}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                     {importItem.failedRows}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         importItem.status === 'COMPLETED'
-                          ? 'bg-green-100 text-green-800'
+                          ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
                           : importItem.status === 'PARTIALLY_COMPLETED'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-red-100 text-red-800'
+                            ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
+                            : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
                       }`}
                     >
                       {importItem.status}
@@ -340,7 +358,7 @@ export default function ReportsPage() {
       </div>
 
       {/* Module Status Notice */}
-      <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
+      <div className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-400 p-4">
         <div className="flex">
           <div className="flex-shrink-0">
             <svg
@@ -388,14 +406,18 @@ function MetricCard({
   description?: string;
 }) {
   return (
-    <div className="bg-white overflow-hidden shadow rounded-lg">
+    <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
       <div className="p-5">
-        <div className="text-sm font-medium text-gray-500 truncate">
+        <div className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
           {title}
         </div>
-        <div className="mt-1 text-2xl font-semibold text-gray-900">{value}</div>
+        <div className="mt-1 text-2xl font-semibold text-gray-900 dark:text-gray-100">
+          {value}
+        </div>
         {description && (
-          <div className="mt-1 text-xs text-gray-500">{description}</div>
+          <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            {description}
+          </div>
         )}
       </div>
     </div>

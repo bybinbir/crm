@@ -12,10 +12,12 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Ayarlar</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+        Ayarlar
+      </h1>
 
       {/* Placeholder Warning */}
-      <div className="bg-amber-50 border-l-4 border-amber-400 p-4">
+      <div className="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-400 p-4">
         <div className="flex">
           <div className="flex-shrink-0">
             <svg
@@ -46,19 +48,19 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="bg-white shadow rounded-lg divide-y divide-gray-200">
+      <div className="bg-white dark:bg-gray-800 shadow rounded-lg divide-y divide-gray-200 dark:divide-gray-700">
         {/* Genel Ayarlar */}
         <div className="p-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">
+          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
             Genel Ayarlar
           </h2>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-medium text-gray-900">
+                <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
                   Bildirimler
                 </h3>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   Sistem bildirimleri ve uyarılar
                 </p>
               </div>
@@ -72,17 +74,17 @@ export default function SettingsPage() {
                 <span
                   className={`${
                     notificationsEnabled ? 'translate-x-5' : 'translate-x-0'
-                  } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+                  } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white dark:bg-gray-800 shadow ring-0 transition duration-200 ease-in-out`}
                 />
               </button>
             </div>
 
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-medium text-gray-900">
+                <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
                   E-posta Raporları
                 </h3>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   Haftalık özet raporları e-posta ile gönder
                 </p>
               </div>
@@ -96,17 +98,17 @@ export default function SettingsPage() {
                 <span
                   className={`${
                     emailReports ? 'translate-x-5' : 'translate-x-0'
-                  } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+                  } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white dark:bg-gray-800 shadow ring-0 transition duration-200 ease-in-out`}
                 />
               </button>
             </div>
 
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-medium text-gray-900">
+                <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
                   Otomatik Senkronizasyon
                 </h3>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   ISSmanager ile otomatik veri senkronizasyonu
                 </p>
               </div>
@@ -120,7 +122,7 @@ export default function SettingsPage() {
                 <span
                   className={`${
                     autoSync ? 'translate-x-5' : 'translate-x-0'
-                  } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+                  } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white dark:bg-gray-800 shadow ring-0 transition duration-200 ease-in-out`}
                 />
               </button>
             </div>
@@ -129,7 +131,7 @@ export default function SettingsPage() {
 
         {/* Görünüm Ayarları */}
         <div className="p-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">
+          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
             Görünüm Ayarları
           </h2>
           <div className="space-y-4">
@@ -142,7 +144,7 @@ export default function SettingsPage() {
               </label>
               <select
                 id="theme"
-                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-md"
+                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-md"
               >
                 <option>Açık</option>
                 <option disabled>Koyu (Yakında)</option>
@@ -159,7 +161,7 @@ export default function SettingsPage() {
               </label>
               <select
                 id="language"
-                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-md"
+                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-md"
               >
                 <option>Türkçe</option>
                 <option disabled>English (Yakında)</option>
@@ -170,11 +172,13 @@ export default function SettingsPage() {
 
         {/* Güvenlik */}
         <div className="p-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Güvenlik</h2>
+          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+            Güvenlik
+          </h2>
           <div className="space-y-3">
-            <button className="w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-md transition">
+            <button className="w-full text-left px-4 py-3 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition">
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-gray-900">
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                   Şifre Değiştir
                 </span>
                 <svg
@@ -191,18 +195,20 @@ export default function SettingsPage() {
               </div>
             </button>
 
-            <button className="w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-md transition">
+            <button className="w-full text-left px-4 py-3 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition">
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-gray-900">
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                   İki Faktörlü Kimlik Doğrulama
                 </span>
-                <span className="text-xs text-gray-500">Yakında</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  Yakında
+                </span>
               </div>
             </button>
 
-            <button className="w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-md transition">
+            <button className="w-full text-left px-4 py-3 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition">
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-gray-900">
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                   Aktif Oturumlar
                 </span>
                 <svg

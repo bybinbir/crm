@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth';
 
 const navigation: Array<{ name: string; href: Route; icon: string }> = [
   { name: 'Genel Bakış', href: '/dashboard', icon: '📊' },
+  { name: 'Veri İmport', href: '/dashboard/import', icon: '📥' },
   { name: 'Entegrasyonlar', href: '/dashboard/integrations', icon: '🔗' },
   { name: 'Mahalle Kalite', href: '/dashboard/neighborhoods', icon: '🏘️' },
   { name: 'Karar Destek', href: '/dashboard/decision-support', icon: '🎯' },

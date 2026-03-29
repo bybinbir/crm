@@ -99,3 +99,10 @@ add-*.py
 check-*.py
 test-*.py
 verify-*.py
+
+# Migration artifacts and bundles
+*.bundle
+*.tar.gz
+*.tar.gz.sha256
+*-migration/
+DOCKERLESS_MIGRATION_BUNDLE.md

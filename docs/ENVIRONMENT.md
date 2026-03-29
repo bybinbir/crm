@@ -473,15 +473,16 @@ cd apps/web && pnpm start
 cd apps/api && pnpm start:prod
 ```
 
-### Docker Production Build
+### Production Deployment
 
-```bash
-# Build production images
-docker compose -f docker-compose.prod.yml build
+Production uses **host-native systemd services**, not Docker.
 
-# Start production stack
-docker compose -f docker-compose.prod.yml up -d
-```
+For production deployment, see:
+
+- [DEPLOYMENT.md](DEPLOYMENT.md) - Native systemd deployment guide
+- [docs/ops/RUNBOOK_PRODUCTION.md](ops/RUNBOOK_PRODUCTION.md) - Operations manual
+
+Local development may use Docker for convenience (optional).
 
 ## Next Steps
 

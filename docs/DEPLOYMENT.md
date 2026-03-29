@@ -1,10 +1,26 @@
-# CRM Analiz Platform - Deployment Guide
+# CRM Analiz Platform - Native Deployment Guide
+
+## Overview
+
+CRM Analiz uses **host-native systemd services** for production deployment. No Docker or containers.
+
+**Architecture:**
+
+- NestJS API: systemd service on port 3000
+- Next.js Web: systemd service on port 4000
+- Nginx: Reverse proxy (ports 80/443)
+- PostgreSQL: Native PostgreSQL service
+- Redis: Native Redis service
+
+**Deployment Method:** Git-based, zero-downtime rollout
+
+---
 
 ## Prerequisites
 
 ### Server Requirements
 
-- Ubuntu 20.04 LTS or higher
+- Ubuntu 20.04 LTS or higher (22.04 recommended)
 - Minimum 2GB RAM, 2 CPU cores
 - 20GB disk space
 - Root or sudo access
@@ -12,367 +28,503 @@
 
 ### Required Software
 
-- Docker Engine 20.10+
-- Docker Compose 2.0+
+- Node.js 20.x LTS
+- pnpm 9.x
+- PostgreSQL 16
+- Redis 7.x
+- Nginx
 - Git
 - Certbot (for SSL certificates)
 
+---
+
 ## Initial Server Setup
 
-### 1. Install Dependencies
+### 1. Install System Dependencies
 
 ```bash
 # Update system
 sudo apt-get update && sudo apt-get upgrade -y
 
-# Install Docker
-curl -fsSL https://get.docker.com -o get-docker.sh
-sudo sh get-docker.sh
-sudo usermod -aG docker $USER
+# Install Node.js 20.x
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs
 
-# Install Docker Compose
-sudo apt-get install docker-compose-plugin -y
+# Install pnpm
+npm install -g pnpm@9
+
+# Install PostgreSQL 16
+sudo apt-get install -y postgresql-16 postgresql-client-16
+
+# Install Redis
+sudo apt-get install -y redis-server
+
+# Install Nginx
+sudo apt-get install -y nginx
 
 # Install other dependencies
-sudo apt-get install -y git certbot curl jq
+sudo apt-get install -y git certbot python3-certbot-nginx curl jq
 ```
 
-### 2. Create Directory Structure
+### 2. Create Deploy User
 
 ```bash
-sudo mkdir -p /opt/crm-analiz/{app,env,logs,backups,scripts}
-sudo chown -R $USER:$USER /opt/crm-analiz
+# Create deploy user (runs application processes)
+sudo useradd -m -s /bin/bash deploy
+sudo usermod -aG sudo deploy
+
+# Set up SSH key for deploy user (for Git operations)
+sudo -u deploy ssh-keygen -t ed25519 -C "deploy@analiz.binbirnet.com.tr"
 ```
 
-### 3. Clone Repository
+### 3. Create Directory Structure
 
 ```bash
-cd /opt/crm-analiz/app
-git clone <repository-url> .
-git checkout feature/vertical-slice-live
+# Application directory
+sudo mkdir -p /var/www/crmanaliz
+sudo chown -R deploy:deploy /var/www/crmanaliz
+
+# Configuration directory
+sudo mkdir -p /etc/crmanaliz
+sudo chown root:deploy /etc/crmanaliz
+sudo chmod 750 /etc/crmanaliz
+
+# Backup directory
+sudo mkdir -p /var/backups/crmanaliz/{postgres,config}
+sudo chown -R deploy:deploy /var/backups/crmanaliz
+
+# Log directory
+sudo mkdir -p /var/log/crmanaliz
+sudo chown -R deploy:deploy /var/log/crmanaliz
 ```
 
-## Environment Configuration
-
-### 1. Create Production Environment File
+### 4. Clone Repository
 
 ```bash
-cd /opt/crm-analiz/app
-cp .env.example .env
+cd /var/www/crmanaliz
+sudo -u deploy git clone <repository-url> .
 ```
 
-### 2. Generate Secrets
+---
+
+## Configuration
+
+### 1. PostgreSQL Setup
 
 ```bash
-# Generate strong random secrets
-JWT_ACCESS_SECRET=$(openssl rand -base64 32)
-JWT_REFRESH_SECRET=$(openssl rand -base64 32)
-ENCRYPTION_KEY=$(openssl rand -base64 32)
-DB_PASSWORD=$(openssl rand -base64 24)
-REDIS_PASSWORD=$(openssl rand -base64 24)
+# Create database and user
+sudo -u postgres psql <<EOF
+CREATE DATABASE crmanaliz;
+CREATE USER crmanaliz WITH ENCRYPTED PASSWORD 'CHANGE_ME';
+GRANT ALL PRIVILEGES ON DATABASE crmanaliz TO crmanaliz;
+ALTER DATABASE crmanaliz OWNER TO crmanaliz;
+EOF
 ```
 
-### 3. Edit .env File
+### 2. Environment Files
 
-```bash
-nano .env
-```
-
-Set the following values:
+Create `/etc/crmanaliz/api.env`:
 
 ```env
-# Application
+NODE_ENV=production
+PORT=3000
+DATABASE_URL=postgresql://crmanaliz:CHANGE_ME@localhost:5432/crmanaliz
+REDIS_URL=redis://localhost:6379
+JWT_ACCESS_SECRET=CHANGE_ME_LONG_RANDOM_STRING
+JWT_REFRESH_SECRET=CHANGE_ME_DIFFERENT_RANDOM_STRING
+ENCRYPTION_KEY=CHANGE_ME_32_CHAR_BASE64_STRING
+CORS_ORIGINS=https://analiz.binbirnet.com.tr
+```
+
+Create `/etc/crmanaliz/web.env`:
+
+```env
 NODE_ENV=production
 PORT=4000
-
-# Database
-DB_NAME=crmanaliz
-DB_USER=crmanaliz
-DB_PASSWORD=<generated-password>
-DATABASE_URL=postgresql://crmanaliz:<DB_PASSWORD>@postgres:5432/crmanaliz
-
-# Redis
-REDIS_PASSWORD=<generated-password>
-REDIS_URL=redis://:<REDIS_PASSWORD>@redis:6379
-
-# JWT
-JWT_ACCESS_SECRET=<generated-secret>
-JWT_ACCESS_EXPIRES_IN=15m
-JWT_REFRESH_SECRET=<generated-secret>
-JWT_REFRESH_EXPIRES_IN=7d
-
-# Encryption
-ENCRYPTION_KEY=<generated-key>
-
-# Admin Bootstrap
-DEFAULT_ADMIN_EMAIL=admin@crmanaliz.local
-DEFAULT_ADMIN_PASSWORD=<strong-password>
-
-# URLs
-APP_URL=https://analiz.binbirnet.com.tr
-API_URL=https://analiz.binbirnet.com.tr
-CORS_ORIGIN=https://analiz.binbirnet.com.tr
-NEXT_PUBLIC_API_URL=https://analiz.binbirnet.com.tr
+NEXT_PUBLIC_API_URL=https://analiz.binbirnet.com.tr/api/v1
+NEXTAUTH_URL=https://analiz.binbirnet.com.tr
+NEXTAUTH_SECRET=CHANGE_ME_LONG_RANDOM_STRING
 ```
 
-### 4. Secure Environment File
+Set secure permissions:
 
 ```bash
-chmod 600 .env
+sudo chown root:deploy /etc/crmanaliz/*.env
+sudo chmod 640 /etc/crmanaliz/*.env
 ```
 
-## SSL Certificate Setup
+### 3. Systemd Service Units
 
-### 1. Obtain Let's Encrypt Certificate
+See `docs/ops/RUNBOOK_PRODUCTION.md` for systemd unit configurations.
+
+Units to create:
+
+- `/etc/systemd/system/crm-analiz-api.service`
+- `/etc/systemd/system/crm-analiz-web.service`
+- `/etc/systemd/system/crmanaliz-backup.timer`
+- `/etc/systemd/system/crmanaliz-backup.service`
+
+### 4. Nginx Configuration
+
+See `deployment/nginx/crmanaliz.conf` for full Nginx configuration.
+
+Enable site:
 
 ```bash
-# Stop any service using ports 80/443
-sudo certbot certonly --standalone -d analiz.binbirnet.com.tr
+sudo ln -s /etc/nginx/sites-available/crmanaliz.conf /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
 ```
 
-### 2. Copy Certificates
+### 5. SSL Certificate
 
 ```bash
-sudo mkdir -p /opt/crm-analiz/app/ssl
-sudo cp /etc/letsencrypt/live/analiz.binbirnet.com.tr/fullchain.pem /opt/crm-analiz/app/ssl/
-sudo cp /etc/letsencrypt/live/analiz.binbirnet.com.tr/privkey.pem /opt/crm-analiz/app/ssl/
-sudo chown -R $USER:$USER /opt/crm-analiz/app/ssl
+sudo certbot --nginx -d analiz.binbirnet.com.tr
 ```
 
-### 3. Setup Auto-Renewal
-
-```bash
-# Add renewal hook
-sudo bash -c 'cat > /etc/letsencrypt/renewal-hooks/post/crm-analiz.sh << EOF
-#!/bin/bash
-cp /etc/letsencrypt/live/analiz.binbirnet.com.tr/fullchain.pem /opt/crm-analiz/app/ssl/
-cp /etc/letsencrypt/live/analiz.binbirnet.com.tr/privkey.pem /opt/crm-analiz/app/ssl/
-docker compose -f /opt/crm-analiz/app/compose.prod.yaml exec nginx nginx -s reload
-EOF'
-sudo chmod +x /etc/letsencrypt/renewal-hooks/post/crm-analiz.sh
-```
+---
 
 ## Deployment
 
-### 1. Initial Deployment
+### First-Time Deployment
 
 ```bash
-cd /opt/crm-analiz/app
-chmod +x scripts/*.sh
-./scripts/deploy.sh
+cd /var/www/crmanaliz
+
+# Install dependencies
+pnpm install --frozen-lockfile
+
+# Build applications
+pnpm build
+
+# Run database migrations
+cd apps/api
+pnpm run migration:run
+cd ../..
+
+# Enable and start services
+sudo systemctl enable crm-analiz-api crm-analiz-web
+sudo systemctl start crm-analiz-api crm-analiz-web
+
+# Enable automated backups
+sudo systemctl enable crmanaliz-backup.timer
+sudo systemctl start crmanaliz-backup.timer
 ```
 
-This script will:
+### Subsequent Deployments
 
-- Build Docker images
-- Start all containers (postgres, redis, api, web, nginx)
-- Run database migrations
-- Execute health checks
-
-### 2. Run Database Seed
+Use the standardized deployment script:
 
 ```bash
-docker compose -f compose.prod.yaml exec api pnpm prisma db seed
+cd /var/www/crmanaliz
+sudo -u deploy ./scripts/deploy-production.sh
 ```
 
-### 3. Verify Deployment
+This script:
+
+- Pulls latest code from Git
+- Installs dependencies with frozen lockfile
+- Builds applications
+- Runs migrations
+- Restarts services
+- Performs health checks
+- Generates release metadata
+
+See `docs/ops/DEPLOYMENT_STANDARD.md` for detailed deployment procedures.
+
+---
+
+## Rollback
+
+If deployment fails or issues arise:
 
 ```bash
-./scripts/healthcheck.sh
+cd /var/www/crmanaliz
+sudo -u deploy ./scripts/rollback-production.sh <commit-sha>
 ```
 
-Expected output:
+This script:
 
-```
-🏥 Health Check
-API: ✅
-Web: ✅
-✅ All services healthy
-```
+- Resets Git to specified commit
+- Rebuilds applications
+- Restarts services
+- Verifies health
 
-## Post-Deployment
+---
 
-### 1. First Login
+## Backup & Recovery
 
-Navigate to: https://analiz.binbirnet.com.tr/login
+### Automated Backups
 
-Credentials:
-
-- Email: (from DEFAULT_ADMIN_EMAIL in .env)
-- Password: (from DEFAULT_ADMIN_PASSWORD in .env)
-
-**IMPORTANT:** Change the admin password immediately after first login.
-
-### 2. Configure ISSmanager Integration
-
-1. Navigate to `/dashboard/integrations/issmanager`
-2. Fill in:
-   - Name: ISSmanager Production
-   - Base URL: <your-issmanager-url>
-   - API Key: <your-issmanager-api-key>
-   - Timeout: 30000
-3. Click "Save"
-4. Click "Test Connection"
-
-### 3. Setup Automated Backups
+Systemd timer runs daily at 02:00 UTC:
 
 ```bash
-# Add to crontab
-crontab -e
+# Check backup timer status
+sudo systemctl status crmanaliz-backup.timer
 
-# Add daily backup at 2 AM
-0 2 * * * /opt/crm-analiz/app/scripts/backup.sh >> /opt/crm-analiz/logs/backup.log 2>&1
+# View recent backups
+ls -lh /var/backups/crmanaliz/postgres/
 ```
 
-## Operations
+### Manual Backup
+
+```bash
+sudo -u deploy /var/www/crmanaliz/scripts/backup-postgres.sh
+```
+
+### Restore from Backup
+
+```bash
+sudo -u deploy /var/www/crmanaliz/scripts/restore-postgres.sh /var/backups/crmanaliz/postgres/crmanaliz-TIMESTAMP.sql.gz
+```
+
+See `docs/ops/BACKUP_AND_RECOVERY.md` for comprehensive backup documentation.
+
+---
+
+## Health Checks
+
+### System Health
+
+```bash
+cd /var/www/crmanaliz
+./scripts/health-check-production.sh
+```
+
+Checks:
+
+- Systemd service status (api, web, nginx, postgresql, redis)
+- Port availability (80, 443, 3000, 4000)
+- HTTP endpoints (/, /api/v1/health)
+- Disk space and memory usage
+
+### Diagnostics
+
+For troubleshooting:
+
+```bash
+cd /var/www/crmanaliz
+./scripts/diagnose-production.sh
+```
+
+Collects:
+
+- Service status and logs (last 50 lines)
+- Port bindings and process ownership
+- Nginx configuration test
+- System resource usage
+
+---
+
+## Operational Runbooks
+
+Comprehensive operational documentation:
+
+- **`docs/ops/RUNBOOK_PRODUCTION.md`** - Day-to-day operations, service management, common issues
+- **`docs/ops/DEPLOYMENT_STANDARD.md`** - Standardized deployment workflow and checklists
+- **`docs/ops/BACKUP_AND_RECOVERY.md`** - Backup system and disaster recovery procedures
+
+---
+
+## Service Management
+
+### Check Service Status
+
+```bash
+sudo systemctl status crm-analiz-api
+sudo systemctl status crm-analiz-web
+```
 
 ### View Logs
 
 ```bash
-# All containers
-docker compose -f compose.prod.yaml logs -f
+# API logs
+sudo journalctl -u crm-analiz-api -n 100 -f
 
-# Specific container
-docker compose -f compose.prod.yaml logs -f api
-docker compose -f compose.prod.yaml logs -f web
+# Web logs
+sudo journalctl -u crm-analiz-web -n 100 -f
 ```
 
 ### Restart Services
 
 ```bash
-docker compose -f compose.prod.yaml restart
+sudo systemctl restart crm-analiz-api
+sudo systemctl restart crm-analiz-web
 ```
 
-### Update Deployment
+### Stop/Start Services
 
 ```bash
-cd /opt/crm-analiz/app
-git pull origin main
-./scripts/deploy.sh
+# Stop
+sudo systemctl stop crm-analiz-api crm-analiz-web
+
+# Start
+sudo systemctl start crm-analiz-api crm-analiz-web
 ```
 
-### Rollback
-
-```bash
-# Set rollback target
-export ROLLBACK_COMMIT=<previous-commit-hash>
-./scripts/rollback.sh
-```
-
-### Backup Database
-
-```bash
-./scripts/backup.sh
-```
-
-### Restore Database
-
-```bash
-BACKUP_FILE=/opt/crm-analiz/backups/backup_YYYYMMDD_HHMMSS.sql.gz
-gunzip -c $BACKUP_FILE | docker compose -f compose.prod.yaml exec -T postgres psql -U crmanaliz crmanaliz
-```
+---
 
 ## Monitoring
 
-### Health Checks
+### Real-time Monitoring
 
 ```bash
-# API health
-curl https://analiz.binbirnet.com.tr/api/v1/health
+# Watch service status
+watch -n 2 'systemctl is-active crm-analiz-api crm-analiz-web nginx postgresql redis'
 
-# Expected: {"status":"ok","timestamp":"...","version":"...","uptime":...}
+# Monitor resource usage
+htop
 ```
 
-### Container Status
+### Log Rotation
+
+Systemd journald handles log rotation automatically. Configure retention:
 
 ```bash
-docker compose -f compose.prod.yaml ps
+# Edit journald config
+sudo nano /etc/systemd/journald.conf
+
+# Set retention (example: 7 days)
+MaxRetentionSec=7day
+SystemMaxUse=500M
+
+# Restart journald
+sudo systemctl restart systemd-journald
 ```
 
-### Resource Usage
-
-```bash
-docker stats
-```
+---
 
 ## Troubleshooting
 
-### Containers Not Starting
+### Service Won't Start
 
 ```bash
-# Check logs
-docker compose -f compose.prod.yaml logs
+# Check service status and errors
+sudo systemctl status crm-analiz-api
+sudo journalctl -u crm-analiz-api -n 50
 
-# Check configuration
-docker compose -f compose.prod.yaml config
+# Common issues:
+# - Port already in use: check with `sudo lsof -i :3000`
+# - Environment file missing: verify /etc/crmanaliz/api.env exists
+# - Database connection: check DATABASE_URL and PostgreSQL status
+```
 
-# Restart
-docker compose -f compose.prod.yaml down
-docker compose -f compose.prod.yaml up -d
+### API Returning 502 Bad Gateway
+
+```bash
+# Check if API process is running
+sudo systemctl status crm-analiz-api
+
+# Check API logs for errors
+sudo journalctl -u crm-analiz-api -n 100
+
+# Verify API is listening on port 3000
+sudo lsof -i :3000
+
+# Test API directly
+curl http://localhost:3000/api/v1/health
 ```
 
 ### Database Connection Issues
 
 ```bash
-# Check PostgreSQL container
-docker compose -f compose.prod.yaml logs postgres
+# Check PostgreSQL status
+sudo systemctl status postgresql
 
-# Verify connection
-docker compose -f compose.prod.yaml exec postgres psql -U crmanaliz -d crmanaliz -c "SELECT version();"
+# Test database connection
+sudo -u postgres psql -d crmanaliz -c "SELECT 1;"
+
+# Verify DATABASE_URL in /etc/crmanaliz/api.env
 ```
 
-### SSL Certificate Issues
+### High Memory Usage
 
 ```bash
-# Check certificate expiry
-sudo certbot certificates
+# Check process memory usage
+ps aux --sort=-%mem | head -10
 
-# Manual renewal
-sudo certbot renew
-
-# Copy renewed certs
-sudo cp /etc/letsencrypt/live/analiz.binbirnet.com.tr/*.pem /opt/crm-analiz/app/ssl/
-docker compose -f compose.prod.yaml restart nginx
+# Restart services to free memory
+sudo systemctl restart crm-analiz-api crm-analiz-web
 ```
 
-## Security Checklist
+---
 
-- [ ] All secrets in .env are unique and strong
-- [ ] .env file has 600 permissions
-- [ ] Database and Redis are not publicly accessible
-- [ ] HTTPS is enforced (HTTP redirects to HTTPS)
-- [ ] SSL certificates are valid and auto-renewing
-- [ ] Admin password changed from default
-- [ ] Backups are running daily
-- [ ] Docker daemon is secured
-- [ ] Firewall allows only ports 80, 443, and SSH
+## Security Hardening
 
-## Performance Tuning
+### File Permissions
 
-### Database
+```bash
+# Application files: deploy user
+sudo chown -R deploy:deploy /var/www/crmanaliz
 
-```sql
--- Connect to database
-docker compose -f compose.prod.yaml exec postgres psql -U crmanaliz crmanaliz
+# Environment files: root with restricted access
+sudo chown root:deploy /etc/crmanaliz/*.env
+sudo chmod 640 /etc/crmanaliz/*.env
 
--- Check slow queries
-SELECT * FROM pg_stat_statements ORDER BY total_time DESC LIMIT 10;
-
--- Analyze and vacuum
-ANALYZE;
-VACUUM;
+# Backup files: deploy user only
+sudo chown -R deploy:deploy /var/backups/crmanaliz
+sudo chmod 700 /var/backups/crmanaliz
 ```
 
-### Application
+### Firewall
 
-- Monitor container resource usage
-- Adjust container memory limits in compose.prod.yaml if needed
-- Enable Redis caching for session storage
+```bash
+# Allow only necessary ports
+sudo ufw allow 22/tcp   # SSH
+sudo ufw allow 80/tcp   # HTTP
+sudo ufw allow 443/tcp  # HTTPS
+sudo ufw enable
+```
+
+### SSH Hardening
+
+```bash
+# Disable root SSH login
+sudo sed -i 's/PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
+sudo systemctl restart ssh
+```
+
+---
+
+## Maintenance Windows
+
+### Planned Downtime
+
+```bash
+# 1. Notify users (optional: put up maintenance page)
+# 2. Stop services
+sudo systemctl stop crm-analiz-api crm-analiz-web
+
+# 3. Perform maintenance (updates, migrations, etc.)
+# 4. Start services
+sudo systemctl start crm-analiz-api crm-analiz-web
+
+# 5. Run health check
+./scripts/health-check-production.sh
+```
+
+### Zero-Downtime Updates
+
+Use the standard deployment script - it handles graceful restarts:
+
+```bash
+./scripts/deploy-production.sh
+```
+
+---
+
+## Legacy Docker Files
+
+Previous Docker-based deployment files are archived in `archive/legacy-docker/` for historical reference only. Production uses native systemd services exclusively.
+
+---
 
 ## Support
 
-For issues, refer to:
+For operational issues, consult:
 
-- [README.md](../README.md)
-- [ARCHITECTURE.md](./ARCHITECTURE.md)
-- [SECURITY.md](./SECURITY.md)
+1. `docs/ops/RUNBOOK_PRODUCTION.md` - Operations manual
+2. `scripts/diagnose-production.sh` - Automated diagnostics
+3. `scripts/health-check-production.sh` - Health verification
+
+For development setup, see `docs/LOCAL_SETUP.md`.

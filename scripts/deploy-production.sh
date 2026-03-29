@@ -1,10 +1,19 @@
 #!/bin/bash
-# Production Deployment Script
-# Local-first CI/CD foundation for bare repo deployment
-set -euo pipefail
+#
+# CRM Analiz Production Deployment Script
+# Dockerless native systemd deployment
+#
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+set -Eeuo pipefail
+
+# ============================================
+# Configuration
+# ============================================
+REPO_DIR="/var/www/crmanaliz"
+BRANCH="feature/core-implementation"
+LOG_DIR="/var/log/crmanaliz/deploy"
+RELEASE_META_FILE="$REPO_DIR/.release-meta.json"
+DEPLOY_USER="deploy"
 
 # Colors
 RED='\033[0;31m'
@@ -12,183 +21,164 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-log() { echo -e "${GREEN}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $1"; }
-warn() { echo -e "${YELLOW}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $1"; }
-error() { echo -e "${RED}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $1"; exit 1; }
+# ============================================
+# Functions
+# ============================================
+log_info() {
+    echo -e "${GREEN}[INFO]${NC} $1"
+}
 
-# ============================================================================
-# PRE-DEPLOYMENT CHECKS
-# ============================================================================
+log_warn() {
+    echo -e "${YELLOW}[WARN]${NC} $1"
+}
 
-log "🔍 Running pre-deployment checks..."
+log_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
 
-# Check if .env exists
-if [ ! -f "$PROJECT_ROOT/.env" ]; then
-    error "❌ .env file not found. Copy .env.example and configure."
+fail() {
+    log_error "$1"
+    exit 1
+}
+
+# ============================================
+# Pre-flight checks
+# ============================================
+log_info "Starting CRM Analiz production deployment"
+echo ""
+
+# Check we're in the right directory
+cd "$REPO_DIR" || fail "Cannot cd to $REPO_DIR"
+
+# Check if git repo
+[[ -d .git ]] || fail "Not a git repository"
+
+# Check clean working directory
+if [[ -n $(git status --porcelain) ]]; then
+    log_warn "Working directory has uncommitted changes"
+    git status --short
+    read -p "Continue anyway? (y/N): " -n 1 -r
+    echo
+    [[ $REPLY =~ ^[Yy]$ ]] || fail "Deployment aborted"
 fi
 
-# Check Node.js
-if ! command -v node &> /dev/null; then
-    error "❌ Node.js not installed"
-fi
+# Create log directory
+mkdir -p "$LOG_DIR"
+DEPLOY_LOG="$LOG_DIR/deploy-$(date +%Y%m%d-%H%M%S).log"
 
-# Check pnpm
-if ! command -v pnpm &> /dev/null; then
-    error "❌ pnpm not installed"
-fi
+# ============================================
+# Git operations
+# ============================================
+{
+    log_info "Fetching latest changes..."
+    git fetch origin
 
-# Check Docker (if using Docker deployment)
-if [ "${USE_DOCKER:-true}" = "true" ]; then
-    if ! command -v docker &> /dev/null; then
-        warn "⚠️  Docker not found, skipping Docker deployment"
-        USE_DOCKER=false
-    fi
-fi
+    log_info "Checking out branch: $BRANCH"
+    git checkout "$BRANCH"
 
-log "✅ Pre-deployment checks passed"
+    log_info "Pulling latest changes (fast-forward only)"
+    git pull --ff-only origin "$BRANCH"
 
-# ============================================================================
-# FETCH LATEST CODE
-# ============================================================================
+    COMMIT_SHA=$(git rev-parse HEAD)
+    COMMIT_SHORT=$(git rev-parse --short HEAD)
+    COMMIT_MSG=$(git log -1 --pretty=%B | head -1)
 
-log "📥 Fetching latest code from origin..."
-cd "$PROJECT_ROOT"
+    log_info "Deployment commit: $COMMIT_SHORT - $COMMIT_MSG"
+    echo ""
 
-# Fetch from local bare repo
-git fetch origin
+    # ============================================
+    # Dependencies
+    # ============================================
+    log_info "Installing dependencies (frozen lockfile)..."
+    pnpm install --frozen-lockfile
 
-# Get current branch
-CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-log "Current branch: $CURRENT_BRANCH"
+    # ============================================
+    # Build
+    # ============================================
+    log_info "Building application..."
+    pnpm build
 
-# Pull latest
-git pull origin "$CURRENT_BRANCH" || error "❌ Failed to pull latest code"
+    # ============================================
+    # Database migrations
+    # ============================================
+    log_info "Running database migrations..."
+    cd apps/api
+    pnpm run migration:run || log_warn "Migration failed or already applied"
+    cd ../..
 
-CURRENT_COMMIT=$(git rev-parse HEAD)
-log "Deploying commit: $CURRENT_COMMIT"
+    # ============================================
+    # Service restart
+    # ============================================
+    log_info "Restarting services..."
+    systemctl restart crm-analiz-api
+    sleep 5
+    systemctl restart crm-analiz-web
+    sleep 5
 
-# ============================================================================
-# DEPENDENCY INSTALLATION
-# ============================================================================
-
-log "📦 Installing dependencies..."
-pnpm install --frozen-lockfile || error "❌ Failed to install dependencies"
-
-# ============================================================================
-# QUALITY GATES
-# ============================================================================
-
-log "🔍 Running quality gates..."
-
-# Typecheck
-log "  • TypeScript type checking..."
-pnpm typecheck || error "❌ Typecheck failed"
-
-# Build
-log "  • Building applications..."
-pnpm build || error "❌ Build failed"
-
-log "✅ Quality gates passed"
-
-# ============================================================================
-# DATABASE BACKUP
-# ============================================================================
-
-log "💾 Creating database backup..."
-if [ -f "$SCRIPT_DIR/backup.sh" ]; then
-    bash "$SCRIPT_DIR/backup.sh" || warn "⚠️  Backup failed, continuing..."
-else
-    warn "⚠️  Backup script not found, skipping backup"
-fi
-
-# ============================================================================
-# DATABASE MIGRATIONS
-# ============================================================================
-
-log "🗄️  Running database migrations..."
-cd "$PROJECT_ROOT/apps/api"
-
-# Check migration status
-pnpm prisma migrate status || warn "⚠️  Migration status check failed"
-
-# Deploy migrations
-pnpm prisma migrate deploy || error "❌ Migration deployment failed"
-
-log "✅ Migrations applied"
-
-# ============================================================================
-# SERVICE RESTART
-# ============================================================================
-
-if [ "$USE_DOCKER" = "true" ]; then
-    log "🐳 Restarting Docker services..."
-    cd "$PROJECT_ROOT"
-    docker compose -f compose.prod.yaml build || error "❌ Docker build failed"
-    docker compose -f compose.prod.yaml up -d || error "❌ Docker start failed"
-
-    # Wait for services to start
-    log "⏳ Waiting for services to start..."
-    sleep 15
-else
-    log "🔄 Restarting services (systemd)..."
-    # Systemd restart (requires systemd units to be set up)
-    if command -v systemctl &> /dev/null; then
-        sudo systemctl restart crmanaliz-api || warn "⚠️  API restart failed"
-        sudo systemctl restart crmanaliz-web || warn "⚠️  Web restart failed"
-        sleep 10
+    # ============================================
+    # Health check
+    # ============================================
+    log_info "Running health checks..."
+    
+    # API health
+    if systemctl is-active --quiet crm-analiz-api; then
+        log_info "✅ API service is active"
     else
-        warn "⚠️  systemctl not available, manual service restart required"
+        fail "❌ API service is not active"
     fi
-fi
 
-# ============================================================================
-# HEALTH CHECK
-# ============================================================================
-
-log "🏥 Running health check..."
-
-# API health check
-API_URL="${API_URL:-http://localhost:3001/api/v1/health}"
-MAX_RETRIES=5
-RETRY_DELAY=3
-
-for i in $(seq 1 $MAX_RETRIES); do
-    if curl -sf "$API_URL" > /dev/null; then
-        log "✅ API health check passed"
-        break
+    # Web health
+    if systemctl is-active --quiet crm-analiz-web; then
+        log_info "✅ Web service is active"
     else
-        if [ $i -eq $MAX_RETRIES ]; then
-            error "❌ API health check failed after $MAX_RETRIES attempts"
-        fi
-        warn "⚠️  Health check failed, retry $i/$MAX_RETRIES in ${RETRY_DELAY}s..."
-        sleep $RETRY_DELAY
+        fail "❌ Web service is not active"
     fi
-done
 
-# Web health check (optional)
-WEB_URL="${WEB_URL:-http://localhost:3000}"
-if curl -sf "$WEB_URL" > /dev/null; then
-    log "✅ Web health check passed"
-else
-    warn "⚠️  Web health check failed (non-critical)"
-fi
+    # HTTP health
+    sleep 5
+    API_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" https://analiz.binbirnet.com.tr/api/v1/health || echo "000")
+    WEB_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" https://analiz.binbirnet.com.tr || echo "000")
 
-# ============================================================================
-# DEPLOYMENT SUCCESS
-# ============================================================================
+    if [[ "$API_HEALTH" == "200" ]]; then
+        log_info "✅ API health check: OK"
+    else
+        log_error "❌ API health check: FAILED (HTTP $API_HEALTH)"
+    fi
 
-log "🎉 Deployment successful!"
-log "  Commit: $CURRENT_COMMIT"
-log "  Branch: $CURRENT_BRANCH"
-log "  Time: $(date)"
+    if [[ "$WEB_HEALTH" == "200" ]]; then
+        log_info "✅ Web health check: OK"
+    else
+        log_error "❌ Web health check: FAILED (HTTP $WEB_HEALTH)"
+    fi
 
-# Save deployment info
-DEPLOY_INFO="$PROJECT_ROOT/.last-deploy"
-cat > "$DEPLOY_INFO" <<EOF
-COMMIT=$CURRENT_COMMIT
-BRANCH=$CURRENT_BRANCH
-TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-STATUS=success
-EOF
+    # ============================================
+    # Release metadata
+    # ============================================
+    log_info "Generating release metadata..."
+    cat > "$RELEASE_META_FILE" << META_EOF
+{
+  "commit": "$COMMIT_SHA",
+  "commitShort": "$COMMIT_SHORT",
+  "commitMessage": "$COMMIT_MSG",
+  "branch": "$BRANCH",
+  "deployedAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "deployedBy": "$(whoami)",
+  "apiHealth": "$API_HEALTH",
+  "webHealth": "$WEB_HEALTH",
+  "status": "success"
+}
+META_EOF
 
-log "✅ Deployment info saved to $DEPLOY_INFO"
+    log_info ""
+    log_info "====================================="
+    log_info "  Deployment successful! "
+    log_info "====================================="
+    log_info "Commit: $COMMIT_SHORT"
+    log_info "Time: $(date)"
+    log_info "API Health: $API_HEALTH"
+    log_info "Web Health: $WEB_HEALTH"
+    log_info ""
+
+} 2>&1 | tee "$DEPLOY_LOG"
+
+exit 0

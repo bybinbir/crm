@@ -30,8 +30,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-gray-500">Yükleniyor...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-gray-500 dark:text-gray-400">Yükleniyor...</div>
       </div>
     );
   }
@@ -39,24 +39,28 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Top Navigation */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="flex h-16 items-center px-6">
           <div className="flex items-center gap-3">
-            <div className="text-2xl font-bold text-blue-600">CRM</div>
-            <div className="text-sm text-gray-500">Analiz Platform</div>
+            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+              CRM
+            </div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              Analiz Platform
+            </div>
           </div>
           <div className="ml-auto flex items-center gap-4">
-            <div className="text-sm text-gray-700">
+            <div className="text-sm text-gray-700 dark:text-gray-300">
               {user.name || user.email}
             </div>
-            <div className="text-xs text-gray-500 px-2 py-1 bg-gray-100 rounded">
+            <div className="text-xs text-gray-500 dark:text-gray-400 px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded">
               {user.role}
             </div>
             <button
               onClick={logout}
-              className="text-sm text-gray-500 hover:text-gray-900 px-3 py-1.5 rounded hover:bg-gray-100 transition"
+              className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white px-3 py-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition"
             >
               Çıkış
             </button>
@@ -66,7 +70,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
       <div className="flex">
         {/* Sidebar */}
-        <div className="w-64 bg-white border-r border-gray-200 min-h-[calc(100vh-4rem)]">
+        <div className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 min-h-[calc(100vh-4rem)]">
           <nav className="p-4 space-y-1">
             {navigation.map((item) => {
               const isActive = pathname === item.href;
@@ -78,8 +82,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                     flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition
                     ${
                       isActive
-                        ? 'bg-blue-50 text-blue-700'
-                        : 'text-gray-700 hover:bg-gray-50'
+                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'
                     }
                   `}
                 >

@@ -14,7 +14,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="tr" suppressHydrationWarning>
-      <head>
+      <body className="antialiased">
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -25,8 +25,6 @@ export default function RootLayout({
             `,
           }}
         />
-      </head>
-      <body className="antialiased">
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

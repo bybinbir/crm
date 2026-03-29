@@ -93,11 +93,13 @@ export default function ImportPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Veri İmport</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          Veri İmport
+        </h1>
       </div>
 
       {/* Instructions */}
-      <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
+      <div className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-400 dark:border-blue-500 p-4">
         <div className="flex">
           <div className="flex-shrink-0">
             <svg
@@ -113,10 +115,10 @@ export default function ImportPage() {
             </svg>
           </div>
           <div className="ml-3">
-            <h3 className="text-sm font-medium text-blue-800">
+            <h3 className="text-sm font-medium text-blue-800 dark:text-blue-300">
               ISSmanager Veri İmport Talimatları
             </h3>
-            <div className="mt-2 text-sm text-blue-700">
+            <div className="mt-2 text-sm text-blue-700 dark:text-blue-300">
               <ol className="list-decimal list-inside space-y-1">
                 <li>ISSmanager admin paneline giriş yapın</li>
                 <li>Müşteri listesini CSV/Excel formatında export edin</li>
@@ -133,31 +135,33 @@ export default function ImportPage() {
       </div>
 
       {/* Upload Form */}
-      <div className="bg-white shadow sm:rounded-lg p-6 space-y-4">
-        <h2 className="text-lg font-medium text-gray-900">Dosya Yükleme</h2>
+      <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6 space-y-4">
+        <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+          Dosya Yükleme
+        </h2>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Veri Kaynağı
           </label>
           <select
             value={sourceType}
             onChange={(e) => setSourceType(e.target.value as SourceType)}
-            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            className="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
           >
             <option value="ISSMANAGER_EXPORT">ISSmanager Export</option>
             <option value="CSV_UPLOAD">Generic CSV Upload</option>
             <option value="EXCEL_UPLOAD">Excel Upload</option>
             <option value="DATABASE_EXPORT">Database Export</option>
           </select>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             ISSmanager&apos;dan export edilen dosyalar için &quot;ISSmanager
             Export&quot; seçin
           </p>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Dosya Seçin
           </label>
           <input
@@ -165,25 +169,25 @@ export default function ImportPage() {
             type="file"
             accept=".csv,.xlsx,.xls"
             onChange={handleFileChange}
-            className="mt-1 block w-full text-sm text-gray-500
+            className="mt-1 block w-full text-sm text-gray-500 dark:text-gray-400
               file:mr-4 file:py-2 file:px-4
               file:rounded-md file:border-0
               file:text-sm file:font-medium
-              file:bg-blue-50 file:text-blue-700
-              hover:file:bg-blue-100
+              file:bg-blue-50 dark:file:bg-blue-900/30 file:text-blue-700 dark:file:text-blue-300
+              hover:file:bg-blue-100 dark:hover:file:bg-blue-900/50
               cursor-pointer"
           />
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             CSV veya Excel dosyası (Maksimum 10MB)
           </p>
         </div>
 
         {file && (
-          <div className="bg-gray-50 rounded-md p-3">
-            <p className="text-sm text-gray-700">
+          <div className="bg-gray-50 dark:bg-gray-700 rounded-md p-3">
+            <p className="text-sm text-gray-700 dark:text-gray-300">
               <strong>Seçilen dosya:</strong> {file.name}
             </p>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               Boyut: {(file.size / 1024).toFixed(2)} KB
             </p>
           </div>
@@ -202,10 +206,10 @@ export default function ImportPage() {
 
       {/* Error Message */}
       {error && (
-        <div className="bg-red-50 border-l-4 border-red-400 p-4">
+        <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400 dark:border-red-500 p-4">
           <div className="flex">
             <div className="ml-3">
-              <p className="text-sm text-red-700">{error}</p>
+              <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
             </div>
           </div>
         </div>
@@ -213,29 +217,33 @@ export default function ImportPage() {
 
       {/* Success Message */}
       {success && (
-        <div className="bg-green-50 border-l-4 border-green-400 p-4">
+        <div className="bg-green-50 dark:bg-green-900/20 border-l-4 border-green-400 dark:border-green-500 p-4">
           <div className="flex">
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-green-800">
+              <h3 className="text-sm font-medium text-green-800 dark:text-green-300">
                 İmport Başarılı!
               </h3>
-              <div className="mt-2 text-sm text-green-700">
+              <div className="mt-2 text-sm text-green-700 dark:text-green-300">
                 <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
                   <dt className="font-medium">Dosya:</dt>
                   <dd>{success.fileName}</dd>
                   <dt className="font-medium">Toplam Satır:</dt>
                   <dd>{success.rowsParsed}</dd>
                   <dt className="font-medium">Başarılı:</dt>
-                  <dd className="text-green-800">{success.rowsImported}</dd>
+                  <dd className="text-green-800 dark:text-green-300">
+                    {success.rowsImported}
+                  </dd>
                   <dt className="font-medium">Başarısız:</dt>
-                  <dd className="text-red-600">{success.rowsFailed}</dd>
+                  <dd className="text-red-600 dark:text-red-400">
+                    {success.rowsFailed}
+                  </dd>
                   <dt className="font-medium">Durum:</dt>
                   <dd>
                     <span
                       className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
                         success.status === 'COMPLETED'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-yellow-100 text-yellow-800'
+                          ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
+                          : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
                       }`}
                     >
                       {success.status}
@@ -245,7 +253,7 @@ export default function ImportPage() {
               </div>
               <button
                 onClick={() => router.push('/dashboard/reports')}
-                className="mt-3 text-sm text-green-700 underline hover:text-green-900"
+                className="mt-3 text-sm text-green-700 dark:text-green-300 underline hover:text-green-900 dark:hover:text-green-100"
               >
                 Raporlara Git →
               </button>
@@ -255,98 +263,100 @@ export default function ImportPage() {
       )}
 
       {/* Field Mapping Reference */}
-      <div className="bg-white shadow sm:rounded-lg p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">
+      <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6">
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
           ISSmanager Alan Eşleştirmesi
         </h3>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   ISSmanager Alan
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Açıklama
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Gerekli
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               <tr>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900 dark:text-gray-100">
                   abone_no
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-500">
+                <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                   Abone numarası (benzersiz ID)
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 dark:text-green-400 font-medium">
                   Evet
                 </td>
               </tr>
               <tr>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900 dark:text-gray-100">
                   isim
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-500">Müşteri adı</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">
+                <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                  Müşteri adı
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 dark:text-green-400 font-medium">
                   Evet
                 </td>
               </tr>
               <tr>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900 dark:text-gray-100">
                   adres
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-500">
+                <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                   Tam adres (mahalle bilgisi için parse edilir)
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 dark:text-green-400 font-medium">
                   Evet
                 </td>
               </tr>
               <tr>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900 dark:text-gray-100">
                   email
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-500">
+                <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                   E-posta adresi
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                   İsteğe bağlı
                 </td>
               </tr>
               <tr>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900 dark:text-gray-100">
                   telefon
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-500">
+                <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                   Telefon numarası
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                   İsteğe bağlı
                 </td>
               </tr>
               <tr>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900 dark:text-gray-100">
                   tarife
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-500">
+                <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                   Tarife/Paket adı
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                   İsteğe bağlı
                 </td>
               </tr>
               <tr>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900 dark:text-gray-100">
                   bakiye
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-500">
+                <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                   Hesap bakiyesi
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                   İsteğe bağlı
                 </td>
               </tr>

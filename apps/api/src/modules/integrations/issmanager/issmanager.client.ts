@@ -4,6 +4,8 @@
  * Includes retry logic, timeout, and error normalization
  */
 
+import { URLSearchParams } from 'url';
+
 import type { AxiosInstance, AxiosError } from 'axios';
 import axios from 'axios';
 
@@ -24,8 +26,7 @@ export class ISSManagerClient {
       baseURL: config.baseUrl,
       timeout: config.timeoutMs,
       headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${config.apiKey}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
     });
 
@@ -39,111 +40,114 @@ export class ISSManagerClient {
   }
 
   /**
-   * Test connection to ISSmanager
-   * Strategy: Try a lightweight endpoint (health check or version)
-   * If no health endpoint exists, try to list a small resource
+   * Test connection to ISSmanager OIM API
+   * Uses real /api/oim/login endpoint to validate credentials
+   *
+   * NOTE: ISSmanager API is customer-facing (OIM) API
+   * It requires username+password authentication
+   * Config apiKey should be in format: "username:password"
    */
   async testConnection(): Promise<ISSManagerConnectionTestResult> {
     const startTime = Date.now();
 
     try {
-      // Try common health check endpoints
-      // Note: Actual endpoint will depend on ISSmanager API documentation
-      // For now, we try common patterns
-      const healthEndpoints = [
-        '/api/health',
-        '/api/v1/health',
-        '/health',
-        '/api/ping',
-        '/ping',
-        '/api/version',
-        '/version',
-      ];
+      // Parse apiKey as username:password
+      const [username, password] = this.config.apiKey.split(':');
 
-      let lastError: Error | null = null;
-
-      for (const endpoint of healthEndpoints) {
-        try {
-          const response = await this.client.get(endpoint, {
-            timeout: 5000, // Shorter timeout for connection test
-          });
-
-          const responseTime = Date.now() - startTime;
-
-          return {
-            success: true,
-            message: 'Connection successful',
-            responseTime,
-            serverVersion: response.data?.version || 'unknown',
-          };
-        } catch (error) {
-          lastError = error as Error;
-          // Continue to next endpoint
-        }
+      if (!username || !password) {
+        return {
+          success: false,
+          message: 'Invalid credentials format',
+          error: 'API Key must be in format "username:password"',
+        };
       }
 
-      // If all health endpoints failed, return the last error
-      return {
-        success: false,
-        message: 'Connection failed',
-        error:
-          lastError?.message ||
-          'Unable to connect to ISSmanager API. Please verify the base URL and API key.',
-      };
+      // Attempt login to validate credentials
+      const params = new URLSearchParams();
+      params.append('username', username);
+      params.append('password', password);
+
+      const response = await this.client.post('/api/oim/login', params, {
+        timeout: 10000,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      });
+
+      const responseTime = Date.now() - startTime;
+
+      // Check if login successful
+      if (response.data?.success && response.data?.data?.token) {
+        return {
+          success: true,
+          message: 'Connection successful - Authentication verified',
+          responseTime,
+          serverVersion: 'ISSmanager OIM API',
+        };
+      } else {
+        return {
+          success: false,
+          message: 'Authentication failed',
+          error: response.data?.message || 'Invalid response from server',
+        };
+      }
     } catch (error) {
+      const axiosError = error as AxiosError;
       return {
         success: false,
         message: 'Connection test failed',
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: axiosError.response?.data
+          ? (axiosError.response.data as { message?: string }).message ||
+            axiosError.message
+          : axiosError.message || 'Unknown error',
       };
     }
   }
 
   /**
    * Get customers from ISSmanager
-   * This is a placeholder - actual implementation depends on API docs
+   *
+   * LIMITATION: ISSmanager provides OIM (customer portal) API only
+   * There is NO bulk customer listing endpoint available
+   * Available endpoint: /api/oim/customer_information (requires authentication, returns single customer)
+   *
+   * For bulk data sync, use manual CSV/Excel import instead
    */
-  async getCustomers(params?: {
+  async getCustomers(_params?: {
     page?: number;
     limit?: number;
-  }): Promise<unknown> {
-    const response = await this.client.get('/api/customers', {
-      params,
-    });
-
-    return response.data;
+  }): Promise<{ customers: never[] }> {
+    throw new Error(
+      'ISSmanager bulk customer API not available. ' +
+        'ISSmanager provides customer-facing OIM API only. ' +
+        'For data import, use manual CSV/Excel upload feature.'
+    );
   }
 
   /**
    * Get personnel from ISSmanager
-   * This is a placeholder - actual implementation depends on API docs
+   *
+   * LIMITATION: Not available in ISSmanager OIM API
    */
-  async getPersonnel(params?: {
+  async getPersonnel(_params?: {
     page?: number;
     limit?: number;
-  }): Promise<unknown> {
-    const response = await this.client.get('/api/personnel', {
-      params,
-    });
-
-    return response.data;
+  }): Promise<{ personnel: never[] }> {
+    throw new Error('Personnel API not available in ISSmanager OIM API');
   }
 
   /**
    * Get finance records from ISSmanager
-   * This is a placeholder - actual implementation depends on API docs
+   *
+   * LIMITATION: Not available in ISSmanager OIM API
    */
-  async getFinanceRecords(params?: {
+  async getFinanceRecords(_params?: {
     page?: number;
     limit?: number;
     startDate?: string;
     endDate?: string;
-  }): Promise<unknown> {
-    const response = await this.client.get('/api/finance', {
-      params,
-    });
-
-    return response.data;
+  }): Promise<{ records: never[] }> {
+    throw new Error('Finance API not available in ISSmanager OIM API');
   }
 
   /**

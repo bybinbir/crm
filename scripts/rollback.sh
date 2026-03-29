@@ -58,8 +58,8 @@ fi
 # ============================================================================
 
 log "💾 Creating pre-rollback database backup..."
-if [ -f "$SCRIPT_DIR/backup.sh" ]; then
-    bash "$SCRIPT_DIR/backup.sh" || warn "⚠️  Backup failed, continuing rollback..."
+if [ -f "$SCRIPT_DIR/backup-postgres.sh" ]; then
+    bash "$SCRIPT_DIR/backup-postgres.sh" || warn "⚠️  Backup failed, continuing rollback..."
 else
     warn "⚠️  Backup script not found, skipping backup"
 fi

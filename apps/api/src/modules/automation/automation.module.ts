@@ -1,6 +1,7 @@
 import { Module, OnModuleInit } from '@nestjs/common';
 
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { AuthModule } from '../auth/auth.module';
 import { ImportsModule } from '../imports/imports.module';
 
 import { AutomationController } from './automation.controller';
@@ -9,7 +10,7 @@ import { SchedulerService } from './scheduler.service';
 import { ISSManagerAutomationWorker } from './workers/issmanager-automation.worker';
 
 @Module({
-  imports: [ImportsModule],
+  imports: [ImportsModule, AuthModule],
   controllers: [AutomationController],
   providers: [
     AutomationService,

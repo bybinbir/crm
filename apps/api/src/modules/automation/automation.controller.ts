@@ -15,7 +15,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 import { AutomationService } from './automation.service';
 
-@Controller('api/v1/automation')
+@Controller('automation')
 @UseGuards(JwtAuthGuard)
 export class AutomationController {
   constructor(private readonly automationService: AutomationService) {}

@@ -10,7 +10,9 @@ import {
   HttpCode,
   Query,
 } from '@nestjs/common';
+
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+
 import { AutomationService } from './automation.service';
 
 @Controller('api/v1/automation')

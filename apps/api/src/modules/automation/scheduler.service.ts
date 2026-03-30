@@ -1,8 +1,10 @@
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
-import * as cron from 'node-cron';
-import { PrismaService } from '../../common/prisma/prisma.service';
-import { AutomationService } from './automation.service';
 import { AutomationJobType } from '@prisma/client';
+import * as cron from 'node-cron';
+
+import { PrismaService } from '../../common/prisma/prisma.service';
+
+import { AutomationService } from './automation.service';
 
 interface ScheduledTask {
   task: cron.ScheduledTask;

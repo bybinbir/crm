@@ -946,22 +946,142 @@ export default function ISSmanagerPage() {
 
       {/* No Config State */}
       {state === 'NO_CONFIG' && (
-        <div className="bg-white shadow sm:rounded-lg">
+        <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg">
           <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900">
+            <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">
               ISSmanager Bağlantısı Yapılandırılmadı
             </h3>
-            <div className="mt-2 max-w-xl text-sm text-gray-500">
+            <div className="mt-2 max-w-xl text-sm text-gray-500 dark:text-gray-400">
               <p>
-                ISSmanager API bağlantısı henüz yapılandırılmamış. Bağlantıyı
-                yapılandırmak için sistem yöneticinizle iletişime geçin veya
-                manuel import kullanın.
+                ISSmanager panel bağlantısı henüz yapılandırılmamış. Otomatik
+                export-import için panel bilgilerini aşağıya girin.
               </p>
             </div>
-            <div className="mt-5">
+
+            {/* Configuration Form */}
+            <div className="mt-6 max-w-2xl">
+              <div className="space-y-4">
+                <div>
+                  <label
+                    htmlFor="baseUrl"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    Panel URL
+                  </label>
+                  <input
+                    type="url"
+                    id="baseUrl"
+                    placeholder="https://panel.issmanager.com"
+                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                  />
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    ISSmanager panel giriş sayfası URL'i
+                  </p>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="username"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    Kullanıcı Adı
+                  </label>
+                  <input
+                    type="text"
+                    id="username"
+                    placeholder="admin"
+                    autoComplete="off"
+                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="password"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    Şifre
+                  </label>
+                  <input
+                    type="password"
+                    id="password"
+                    placeholder="••••••••"
+                    autoComplete="new-password"
+                    className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                  />
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Şifre güvenli şekilde şifrelenerek saklanacaktır
+                  </p>
+                </div>
+
+                <div className="pt-3">
+                  <button
+                    onClick={async () => {
+                      const baseUrl = (
+                        document.getElementById('baseUrl') as HTMLInputElement
+                      )?.value;
+                      const username = (
+                        document.getElementById('username') as HTMLInputElement
+                      )?.value;
+                      const password = (
+                        document.getElementById('password') as HTMLInputElement
+                      )?.value;
+
+                      if (!baseUrl || !username || !password) {
+                        alert('Lütfen tüm alanları doldurun');
+                        return;
+                      }
+
+                      try {
+                        const res = await fetch('/api/v1/admin/integrations', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          credentials: 'include',
+                          body: JSON.stringify({
+                            name: 'ISSmanager Primary',
+                            baseUrl,
+                            apiKey: `${username}:${password}`,
+                            timeoutMs: 30000,
+                          }),
+                        });
+
+                        if (!res.ok) {
+                          const error = await res.json();
+                          alert(
+                            `Hata: ${error.message || 'Bağlantı oluşturulamadı'}`
+                          );
+                          return;
+                        }
+
+                        alert(
+                          'ISSmanager bağlantısı başarıyla yapılandırıldı!'
+                        );
+                        await loadConfigAndStatus();
+                      } catch (error) {
+                        alert(
+                          `Bağlantı hatası: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`
+                        );
+                      }
+                    }}
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition"
+                  >
+                    💾 Bağlantıyı Kaydet
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Alternatif: Manuel İmport
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+                Otomatik entegrasyon kullanmak istemiyorsanız, manuel
+                export/import yöntemiyle devam edebilirsiniz.
+              </p>
               <button
                 onClick={() => router.push('/dashboard/import')}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition"
+                className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition"
               >
                 📥 Manuel İmport Kullan
               </button>

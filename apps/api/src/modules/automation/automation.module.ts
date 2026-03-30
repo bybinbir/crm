@@ -1,10 +1,12 @@
 import { Module, OnModuleInit } from '@nestjs/common';
+
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { ImportsModule } from '../imports/imports.module';
-import { AutomationService } from './automation.service';
+
 import { AutomationController } from './automation.controller';
-import { ISSManagerAutomationWorker } from './workers/issmanager-automation.worker';
+import { AutomationService } from './automation.service';
 import { SchedulerService } from './scheduler.service';
+import { ISSManagerAutomationWorker } from './workers/issmanager-automation.worker';
 
 @Module({
   imports: [ImportsModule],

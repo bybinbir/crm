@@ -11,6 +11,7 @@ import { HealthModule } from './modules/health/health.module';
 import { ImportsModule } from './modules/imports/imports.module';
 import { IntegrationsModule } from './modules/integrations/integrations.module';
 import { NeighborhoodsModule } from './modules/neighborhoods/neighborhoods.module';
+import { UsersModule } from './modules/users/users.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { NeighborhoodsModule } from './modules/neighborhoods/neighborhoods.modul
     DashboardModule,
     NeighborhoodsModule,
     AutomationModule,
+    UsersModule,
   ],
 })
 export class AppModule {}

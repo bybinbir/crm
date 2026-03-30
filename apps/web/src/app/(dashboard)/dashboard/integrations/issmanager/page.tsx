@@ -27,6 +27,29 @@ interface SyncRun {
   errorMessage: string | null;
 }
 
+interface AutomationSchedule {
+  id: string;
+  cronExpression: string;
+  isEnabled: boolean;
+  lastRunAt: string | null;
+  lastRunStatus: string | null;
+  nextScheduledRunAt: string | null;
+}
+
+interface AutomationJob {
+  id: string;
+  status: string;
+  triggerType: string;
+  createdAt: string;
+  startedAt: string | null;
+  completedAt: string | null;
+  filesProcessed: number;
+  recordsProcessed: number;
+  recordsSucceeded: number;
+  recordsFailed: number;
+  errorMessage: string | null;
+}
+
 type ConfigState =
   | 'NO_CONFIG'
   | 'CONFIG_UNVERIFIED'
@@ -46,10 +69,24 @@ export default function ISSmanagerPage() {
     message: string;
   } | null>(null);
 
+  // Automation state
+  const [automationSchedule, setAutomationSchedule] =
+    useState<AutomationSchedule | null>(null);
+  const [automationJobs, setAutomationJobs] = useState<AutomationJob[]>([]);
+  const [triggeringAutomation, setTriggeringAutomation] = useState(false);
+  const [updatingSchedule, setUpdatingSchedule] = useState(false);
+
   // Load config and sync runs
   useEffect(() => {
     void loadConfigAndStatus();
   }, []);
+
+  // Load automation status
+  useEffect(() => {
+    if (config?.id) {
+      void loadAutomationStatus();
+    }
+  }, [config?.id]);
 
   const loadConfigAndStatus = async () => {
     try {
@@ -216,6 +253,141 @@ export default function ISSmanagerPage() {
         setSyncing(false);
       }
     }, 2000);
+  };
+
+  const loadAutomationStatus = async () => {
+    if (!config?.id) return;
+
+    try {
+      // Load schedule
+      const scheduleRes = await fetch(
+        `/api/v1/automation/integrations/${config.id}/schedule`,
+        { credentials: 'include' }
+      );
+
+      if (scheduleRes.ok) {
+        const { schedule } = await scheduleRes.json();
+        setAutomationSchedule(schedule);
+      }
+
+      // Load recent jobs
+      const jobsRes = await fetch(
+        `/api/v1/automation/integrations/${config.id}/jobs?limit=10`,
+        { credentials: 'include' }
+      );
+
+      if (jobsRes.ok) {
+        const { jobs } = await jobsRes.json();
+        setAutomationJobs(jobs);
+      }
+    } catch (error) {
+      console.error('Failed to load automation status:', error);
+    }
+  };
+
+  const handleTriggerAutomation = async () => {
+    if (!config?.id) return;
+
+    try {
+      setTriggeringAutomation(true);
+
+      const res = await fetch(
+        `/api/v1/automation/integrations/${config.id}/trigger`,
+        {
+          method: 'POST',
+          credentials: 'include',
+        }
+      );
+
+      if (!res.ok) {
+        const error = await res.json();
+        alert(`Otomatik çekim başlatılamadı: ${error.message}`);
+        return;
+      }
+
+      await res.json();
+
+      // Reload automation status
+      await loadAutomationStatus();
+
+      alert(
+        'Otomatik çekim başlatıldı. İşlem tamamlandığında bu sayfa güncellenecek.'
+      );
+    } catch (error) {
+      alert(
+        `Otomatik çekim başlatılamadı: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`
+      );
+    } finally {
+      setTriggeringAutomation(false);
+    }
+  };
+
+  const handleToggleAutomation = async () => {
+    if (!config?.id) return;
+
+    try {
+      setUpdatingSchedule(true);
+
+      const newEnabled = !automationSchedule?.isEnabled;
+
+      const res = await fetch(
+        `/api/v1/automation/integrations/${config.id}/schedule`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ isEnabled: newEnabled }),
+        }
+      );
+
+      if (!res.ok) {
+        const error = await res.json();
+        alert(`Zamanlama güncellenemedi: ${error.message}`);
+        return;
+      }
+
+      await loadAutomationStatus();
+    } catch (error) {
+      alert(
+        `Zamanlama güncellenemedi: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`
+      );
+    } finally {
+      setUpdatingSchedule(false);
+    }
+  };
+
+  const handleUpdateScheduleTime = async (hour: number, minute: number) => {
+    if (!config?.id) return;
+
+    try {
+      setUpdatingSchedule(true);
+
+      const cronExpression = `${minute} ${hour} * * *`;
+
+      const res = await fetch(
+        `/api/v1/automation/integrations/${config.id}/schedule`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ cronExpression }),
+        }
+      );
+
+      if (!res.ok) {
+        const error = await res.json();
+        alert(`Saat güncellenemedi: ${error.message}`);
+        return;
+      }
+
+      await loadAutomationStatus();
+    } catch (error) {
+      alert(
+        `Saat güncellenemedi: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`
+      );
+    } finally {
+      setUpdatingSchedule(false);
+    }
   };
 
   if (loading) {
@@ -393,6 +565,235 @@ export default function ISSmanagerPage() {
             {state === 'SYNC_RUNNING' && (
               <div className="mt-4 p-4 bg-blue-50 text-blue-800 rounded-md text-sm">
                 ⏳ Senkronizasyon devam ediyor...
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Automation Section */}
+      {state !== 'NO_CONFIG' && config && (
+        <div className="bg-white dark:bg-gray-800 shadow sm:rounded-lg">
+          <div className="px-4 py-5 sm:p-6">
+            <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100 mb-4">
+              Otomatik Export-Import
+            </h3>
+
+            {/* Automation Status */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Zamanlama Durumu
+                </div>
+                <div className="mt-2 flex items-center">
+                  <span
+                    className={`px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full ${
+                      automationSchedule?.isEnabled
+                        ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
+                        : 'bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-300'
+                    }`}
+                  >
+                    {automationSchedule?.isEnabled ? 'Aktif' : 'Devre Dışı'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Çalışma Saati
+                </div>
+                <div className="mt-2 text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  {automationSchedule?.cronExpression
+                    ? (() => {
+                        const parts =
+                          automationSchedule.cronExpression.split(' ');
+                        const minute = parts[0];
+                        const hour = parts[1];
+                        return `Her gün ${hour}:${minute.padStart(2, '0')}`;
+                      })()
+                    : 'Her gün 18:00 (Varsayılan)'}
+                </div>
+              </div>
+
+              {automationSchedule?.lastRunAt && (
+                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                  <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    Son Çalışma
+                  </div>
+                  <div className="mt-2 text-sm text-gray-900 dark:text-gray-100">
+                    {new Date(automationSchedule.lastRunAt).toLocaleString(
+                      'tr-TR'
+                    )}
+                  </div>
+                  <div className="mt-1">
+                    <span
+                      className={`px-2 py-0.5 inline-flex text-xs leading-4 font-semibold rounded ${
+                        automationSchedule.lastRunStatus === 'COMPLETED'
+                          ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
+                          : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
+                      }`}
+                    >
+                      {automationSchedule.lastRunStatus || 'Bilinmiyor'}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {automationSchedule?.nextScheduledRunAt && (
+                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                  <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    Sonraki Çalışma
+                  </div>
+                  <div className="mt-2 text-sm text-gray-900 dark:text-gray-100">
+                    {new Date(
+                      automationSchedule.nextScheduledRunAt
+                    ).toLocaleString('tr-TR')}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-wrap gap-3 mb-6">
+              <button
+                onClick={handleTriggerAutomation}
+                disabled={triggeringAutomation}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              >
+                {triggeringAutomation ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Başlatılıyor...
+                  </>
+                ) : (
+                  <>⚡ Şimdi Çek</>
+                )}
+              </button>
+
+              <button
+                onClick={handleToggleAutomation}
+                disabled={updatingSchedule}
+                className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition ${
+                  automationSchedule?.isEnabled
+                    ? 'bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 focus:ring-red-500'
+                    : 'bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 focus:ring-green-500'
+                }`}
+              >
+                {updatingSchedule ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Güncelleniyor...
+                  </>
+                ) : automationSchedule?.isEnabled ? (
+                  <>⏸️ Otomasyonu Durdur</>
+                ) : (
+                  <>▶️ Otomasyonu Başlat</>
+                )}
+              </button>
+
+              <button
+                onClick={() => {
+                  const hour = prompt('Saat (0-23):', '18');
+                  const minute = prompt('Dakika (0-59):', '0');
+                  if (hour && minute) {
+                    void handleUpdateScheduleTime(
+                      parseInt(hour, 10),
+                      parseInt(minute, 10)
+                    );
+                  }
+                }}
+                disabled={updatingSchedule}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              >
+                🕐 Saati Değiştir
+              </button>
+            </div>
+
+            {/* Automation Jobs History */}
+            {automationJobs.length > 0 && (
+              <div className="mt-6">
+                <h4 className="text-md font-medium text-gray-900 dark:text-gray-100 mb-3">
+                  Otomatik Çekim Geçmişi
+                </h4>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead className="bg-gray-50 dark:bg-gray-700">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Durum
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Tetikleme
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Başlangıç
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Kayıt
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Başarılı
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Başarısız
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                      {automationJobs.map((job) => (
+                        <tr
+                          key={job.id}
+                          className="hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                        >
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <span
+                              className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                job.status === 'COMPLETED'
+                                  ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
+                                  : job.status === 'FAILED'
+                                    ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
+                                    : job.status === 'RUNNING' ||
+                                        job.status === 'EXPORTING' ||
+                                        job.status === 'IMPORTING'
+                                      ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
+                                      : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
+                              }`}
+                            >
+                              {job.status}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                            <span
+                              className={`px-2 py-0.5 inline-flex text-xs leading-4 font-medium rounded ${
+                                job.triggerType === 'MANUAL'
+                                  ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300'
+                                  : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
+                              }`}
+                            >
+                              {job.triggerType === 'MANUAL'
+                                ? 'Manuel'
+                                : 'Zamanlanmış'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            {job.startedAt
+                              ? new Date(job.startedAt).toLocaleString('tr-TR')
+                              : '-'}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                            {job.recordsProcessed}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                            {job.recordsSucceeded}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                            {job.recordsFailed}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </div>

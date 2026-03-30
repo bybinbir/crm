@@ -11,6 +11,6 @@ import { ImportProcessorService } from './services/import-processor.service';
   imports: [AuthModule],
   providers: [ImportsService, ImportProcessorService, PrismaService],
   controllers: [ImportsController],
-  exports: [ImportsService],
+  exports: [ImportsService, ImportProcessorService],
 })
 export class ImportsModule {}

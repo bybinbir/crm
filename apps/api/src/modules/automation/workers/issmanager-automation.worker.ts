@@ -5,6 +5,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import type { IntegrationConfig } from '@prisma/client';
 import { chromium, Browser, Page } from 'playwright';
 
+import { ImportProcessorService } from '../../imports/services/import-processor.service';
+
 export interface AutomationResult {
   filesProcessed: number;
   recordsProcessed: number;
@@ -21,7 +23,7 @@ export class ISSManagerAutomationWorker {
   private readonly downloadDir = path.join(process.cwd(), 'temp', 'downloads');
   private readonly stagingDir = path.join(process.cwd(), 'temp', 'staging');
 
-  constructor() {
+  constructor(private readonly importProcessor: ImportProcessorService) {
     // Ensure directories exist
     this.ensureDirectories().catch((err) => {
       this.logger.error('Failed to create directories:', err);
@@ -180,23 +182,45 @@ export class ISSManagerAutomationWorker {
     return stagingPath;
   }
 
-  private async triggerImport(_stagingFilePath: string): Promise<{
+  private async triggerImport(stagingFilePath: string): Promise<{
     batchId: string;
     recordsProcessed: number;
     recordsSucceeded: number;
     recordsFailed: number;
   }> {
-    // In real implementation, integrate with ImportService
-    // For now, return mock data
-    this.logger.warn(
-      'Import integration not yet implemented - returning mock data'
-    );
+    this.logger.log(`Triggering import for file: ${stagingFilePath}`);
 
-    return {
-      batchId: 'mock-batch-id',
-      recordsProcessed: 0,
-      recordsSucceeded: 0,
-      recordsFailed: 0,
-    };
+    try {
+      // Read file from staging
+      const fileBuffer = await fs.readFile(stagingFilePath);
+      const fileName = path.basename(stagingFilePath);
+      const stats = await fs.stat(stagingFilePath);
+
+      // Process import using ISSMANAGER_EXPORT source type
+      const result = await this.importProcessor.processCustomerImport(
+        fileBuffer,
+        fileName,
+        stats.size,
+        'text/csv',
+        'automation-system', // System user ID for automated imports
+        'ISSMANAGER_EXPORT'
+      );
+
+      this.logger.log(
+        `Import completed: ${result.successRows} success, ${result.failedRows} failed`
+      );
+
+      return {
+        batchId: result.batchId,
+        recordsProcessed: result.totalRows,
+        recordsSucceeded: result.successRows,
+        recordsFailed: result.failedRows,
+      };
+    } catch (error) {
+      this.logger.error('Import failed:', error);
+      throw new Error(
+        `Import processing failed: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
   }
 }

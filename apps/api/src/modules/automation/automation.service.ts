@@ -5,7 +5,7 @@ import {
   AutomationTriggerType,
 } from '@prisma/client';
 
-import { PrismaService } from '../../prisma/prisma.service';
+import { PrismaService } from '../../common/prisma/prisma.service';
 
 import { ISSManagerAutomationWorker } from './workers/issmanager-automation.worker';
 

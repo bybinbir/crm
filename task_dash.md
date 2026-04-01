@@ -2,18 +2,18 @@
 
 ## Project Overview
 
-| Property            | Value                           |
-| ------------------- | ------------------------------- |
-| **Project Name**    | CRM Analiz Platform             |
-| **Current Version** | 0.1.0                           |
-| **Current Branch**  | feature/core-implementation     |
-| **Current Phase**   | CLOSED - Production Operational |
-| **Last Updated**    | 2026-04-01                      |
-| **Project Status**  | CLOSED                          |
+| Property            | Value                                    |
+| ------------------- | ---------------------------------------- |
+| **Project Name**    | CRM Analiz Platform                      |
+| **Current Version** | 0.1.0                                    |
+| **Current Branch**  | feature/core-implementation              |
+| **Current Phase**   | BLOCKED - Awaiting Real ISS Manager Sync |
+| **Last Updated**    | 2026-04-01                               |
+| **Project Status**  | BLOCKED                                  |
 
 ## Objective
 
-✅ **COMPLETED** - Production-grade core platform delivered:
+⏸️ **BLOCKED** - Platform infrastructure complete, real ISS Manager sync required:
 
 - ✅ Complete database schema (Prisma + PostgreSQL)
 - ✅ Authentication and authorization (JWT + RBAC)
@@ -24,7 +24,7 @@
 - ✅ Quality gates passing (typecheck, lint, test, build)
 - ✅ Production deployment and monitoring
 - ✅ Scheduler infrastructure operational
-- 🔄 ISS Manager real credentials activation (EXTERNAL - See follow-up section)
+- ❌ **ISS Manager real credentials and successful sync (BLOCKER - Customer action required)**
 
 ## Product Decisions
 
@@ -401,14 +401,17 @@ Development workflow:
 
 ---
 
-## Project Closure
+## Project Status
 
-### Status: CLOSED ✅
+### Status: BLOCKED ⏸️
 
-**Closure Date:** 2026-04-01
-**Final Decision:** CRM Analiz production platform is complete and operational. ISS Manager real credential activation is separated as external onboarding follow-up.
+**Assessment Date:** 2026-04-01
+**Blocker:** Real ISS Manager credentials and successful data sync required for project completion.
 
-### Completed Deliverables
+**Critical Finding (Task 073):**
+Platform infrastructure is complete and operational, but project CANNOT be declared complete without at least 1 successful real data sync from ISS Manager.
+
+### Completed Infrastructure Deliverables
 
 1. ✅ Production platform deployed (194.15.45.47)
 2. ✅ Database schema and migrations
@@ -421,26 +424,46 @@ Development workflow:
 9. ✅ Deployment automation (systemd services)
 10. ✅ Complete documentation
 
-### External Follow-up: ISS Manager Credential Activation
+### Blocking Issue: No Real ISS Manager Sync
 
-**Status:** PENDING EXTERNAL INPUT
-**Type:** Separate onboarding task (not blocking platform closure)
+**Current Integration Config (Production):**
 
-**Requirements:**
+```
+base_url: https://iss-manager.example.com/api  ← PLACEHOLDER
+status: PENDING  ← Not ACTIVE
+last_test_at: NULL  ← Never tested
+```
 
-- Real ISS Manager base_url
-- Real ISS Manager api_key
-- Test connection via dashboard
-- Execute forced scheduled run
-- Verify auth/fetch/persist chain
+**Database Evidence:**
 
-**Runbook:** See `docs/operations/ISSMANAGER_ACTIVATION_RUNBOOK.md`
+- ❌ Zero COMPLETED jobs from ISS Manager
+- ❌ Zero ISS Manager import batches
+- ❌ Zero customer records from ISS Manager
+- ❌ No real data sync has occurred
 
-**Why External:** Requires customer-provided credentials and real ISS Manager instance access. Platform infrastructure is complete and verified.
+**New Success Criteria (Mandatory):**
+
+- ✅ Real base_url (not placeholder)
+- ✅ Real api_key (customer-provided)
+- ✅ Successful connection test
+- ✅ At least 1 successful data sync
+- ✅ Database evidence of persisted records
+
+**Required Actions (Customer):**
+
+1. Provide real ISS Manager instance URL
+2. Provide real ISS Manager API key
+3. Update integration config via dashboard
+4. Test connection
+5. Execute successful sync
+
+**Activation Procedure:** See `docs/ops/ISSMANAGER_ACTIVATION_RUNBOOK.md`
+
+**Why Blocking:** New criteria explicitly require real sync with database evidence. "Infrastructure ready" is not sufficient for completion.
 
 ---
 
 **Last Updated:** 2026-04-01
-**Updated By:** Claude (CRM-ANALIZ-HARD-CLOSE-069)
-**Project Status:** CLOSED
-**Follow-up:** ISS Manager credential activation (external dependency)
+**Updated By:** Claude (CRM-ANALIZ-ISSMANAGER-REAL-SYNC-HARD-CLOSE-073)
+**Project Status:** BLOCKED (awaiting real ISS Manager credentials and successful sync)
+**Blocker Owner:** Customer (credentials provisioning)

@@ -11,7 +11,7 @@ import { HealthModule } from './modules/health/health.module';
 import { ImportsModule } from './modules/imports/imports.module';
 import { IntegrationsModule } from './modules/integrations/integrations.module';
 import { NeighborhoodsModule } from './modules/neighborhoods/neighborhoods.module';
-import { UsersModule } from './modules/users/users.module';
+// import { UsersModule } from './modules/users/users.module'; // Not in production yet
 
 @Module({
   imports: [
@@ -29,7 +29,7 @@ import { UsersModule } from './modules/users/users.module';
     DashboardModule,
     NeighborhoodsModule,
     AutomationModule,
-    UsersModule,
+    // UsersModule, // Not in production yet
   ],
 })
 export class AppModule {}

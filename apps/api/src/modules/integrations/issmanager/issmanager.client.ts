@@ -18,6 +18,8 @@ import type {
 export class ISSManagerClient {
   private client: AxiosInstance;
   private config: ISSManagerConfig;
+  private tokenCache: string | null = null;
+  private tokenExpiry: number | null = null;
 
   constructor(config: ISSManagerConfig) {
     this.config = config;
@@ -37,6 +39,75 @@ export class ISSManagerClient {
         return Promise.reject(this.normalizeError(error));
       }
     );
+  }
+
+  /**
+   * Authenticate with ISSmanager OIM API and get token
+   * Token is cached for 1 hour (assumed lifespan)
+   *
+   * @private
+   */
+  private async authenticate(): Promise<string> {
+    // Check token cache
+    if (this.tokenCache && this.tokenExpiry && this.tokenExpiry > Date.now()) {
+      return this.tokenCache;
+    }
+
+    // Parse apiKey as username:password
+    const [username, password] = this.config.apiKey.split(':');
+
+    if (!username || !password) {
+      throw new Error(
+        'Invalid credentials format. Expected "username:password"'
+      );
+    }
+
+    // POST /api/oim/login
+    const params = new URLSearchParams();
+    params.append('username', username);
+    params.append('password', password);
+
+    const response = await this.client.post('/api/oim/login', params, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    });
+
+    // Validate response
+    if (!response.data?.success || !response.data?.data?.token) {
+      throw new Error(
+        `Authentication failed: ${response.data?.message || 'Invalid response'}`
+      );
+    }
+
+    // Cache token (1 hour TTL)
+    this.tokenCache = response.data.data.token;
+    this.tokenExpiry = Date.now() + 60 * 60 * 1000; // 1 hour
+
+    return this.tokenCache!; // Non-null assertion: token was just set above
+  }
+
+  /**
+   * Execute authenticated request with automatic token refresh
+   *
+   * @private
+   */
+  private async executeWithAuth<T>(
+    operation: (token: string) => Promise<T>
+  ): Promise<T> {
+    try {
+      const token = await this.authenticate();
+      return await operation(token);
+    } catch (error) {
+      // If 401, clear token cache and retry once
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        this.tokenCache = null;
+        this.tokenExpiry = null;
+        const token = await this.authenticate();
+        return await operation(token);
+      }
+      throw error;
+    }
   }
 
   /**
@@ -107,21 +178,102 @@ export class ISSManagerClient {
   /**
    * Get customers from ISSmanager
    *
-   * LIMITATION: ISSmanager provides OIM (customer portal) API only
-   * There is NO bulk customer listing endpoint available
-   * Available endpoint: /api/oim/customer_information (requires authentication, returns single customer)
+   * IMPLEMENTATION NOTE:
+   * ISSmanager OIM API provides /api/oim/customer_information which returns
+   * the authenticated user's customer data only (single customer).
    *
-   * For bulk data sync, use manual CSV/Excel import instead
+   * There is NO bulk customer listing endpoint in the documented OIM API.
+   * The /api/iss/api/list endpoint exists but uses different auth (undocumented).
+   *
+   * CURRENT APPROACH:
+   * - Fetch single customer (authenticated user's data)
+   * - Return as array with 1 customer for compatibility
+   *
+   * FUTURE SCALING:
+   * - Contact Quart Bilişim for bulk export API
+   * - Or implement manual CSV upload feature
+   * - Or reverse-engineer /api/iss/api/list endpoint
    */
-  async getCustomers(_params?: {
-    page?: number;
-    limit?: number;
-  }): Promise<{ customers: never[] }> {
-    throw new Error(
-      'ISSmanager bulk customer API not available. ' +
-        'ISSmanager provides customer-facing OIM API only. ' +
-        'For data import, use manual CSV/Excel upload feature.'
-    );
+  async getCustomers(_params?: { page?: number; limit?: number }): Promise<{
+    customers: Array<{
+      id: string;
+      externalId: string;
+      name: string;
+      email: string | null;
+      phone: string | null;
+      address: string | null;
+      billingAddress: string | null;
+      plan: string | null;
+      planPrice: number | null;
+      serviceEndDate: string | null;
+      balance: number | null;
+      isPrepaid: boolean;
+      metadata: Record<string, unknown>;
+    }>;
+  }> {
+    return this.executeWithAuth(async (token) => {
+      // GET /api/oim/customer_information
+      const response = await this.client.get('/api/oim/customer_information', {
+        headers: {
+          'X-HTTP-Authorization': token,
+        },
+      });
+
+      // Validate response
+      if (!response.data?.success) {
+        throw new Error(
+          `Failed to fetch customer: ${response.data?.message || 'Unknown error'}`
+        );
+      }
+
+      const customerData = response.data.data?.customer;
+
+      if (!customerData) {
+        return { customers: [] };
+      }
+
+      // Map ISS Manager customer data to our format
+      // Based on official ISSmanager OIM API documentation
+      const customer = {
+        id: customerData.abone_no || 'UNKNOWN', // Service expects 'id' field
+        externalId: customerData.abone_no || 'UNKNOWN',
+        name: customerData.isim || 'Unknown Customer',
+        email: customerData.email || null,
+        phone: customerData.telefon || null,
+        address: customerData.adres || null,
+        billingAddress: customerData.fatura_adres || customerData.adres || null,
+        plan: customerData.tarife || null,
+        planPrice: customerData.tarife_fiyat
+          ? parseFloat(customerData.tarife_fiyat)
+          : null,
+        serviceEndDate: customerData.bitis_tarihi || null,
+        balance: customerData.bakiye ? parseFloat(customerData.bakiye) : null,
+        isPrepaid: customerData.on_odemeli || false,
+        metadata: {
+          pppoeUsername: customerData.pppoe_k_adi,
+          pppoePassword: customerData.pppoe_parola, // Note: Sensitive, consider excluding in production
+          oimUsername: customerData.oim_k_adi,
+          planType: customerData.tarife_tur,
+          staticIpFee: customerData.sabit_ip_ucreti,
+          activationFee: customerData.aktivasyon_ucreti,
+          commitmentEnd: customerData.taahhut_bitis,
+          kdv: customerData.kdv,
+          oiv: customerData.oiv,
+          invoices: customerData.faturalar || [],
+          tickets: customerData.ariza_kayitlari || [],
+          trafficData: customerData.trafik_data || [],
+          otherSubscriptions: customerData.diger_abonelikler || [],
+          maxPackageExtension: customerData.max_paket_uzat_oim,
+          unpaidPermission: customerData.odenmemis_izin,
+          gihProfile: customerData.gih_profil,
+          gihProfiles: customerData.gih_profiller,
+          gihHistory: customerData.gih_son_islemler || [],
+          unpaidCount: customerData.veresiye_sayisi,
+        },
+      };
+
+      return { customers: [customer] };
+    });
   }
 
   /**

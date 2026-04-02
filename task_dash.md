@@ -463,7 +463,36 @@ last_test_at: NULL  ← Never tested
 
 ---
 
-**Last Updated:** 2026-04-01
-**Updated By:** Claude (CRM-ANALIZ-ISSMANAGER-REAL-SYNC-HARD-CLOSE-073)
+**Last Updated:** 2026-04-02
+**Updated By:** Claude (CRM-ANALIZ-ISSMANAGER-DOCS-TO-LIVE-SYNC-075)
 **Project Status:** BLOCKED (awaiting real ISS Manager credentials and successful sync)
 **Blocker Owner:** Customer (credentials provisioning)
+
+---
+
+## Task 075 Summary (2026-04-02)
+
+**Görev:** ISS Manager API dokümantasyonunu baz alarak gerçek entegrasyon testi
+
+**Bulgular:**
+
+- ✅ API dokümantasyonu analiz edildi (18 endpoint, JWT auth, 32 field mapping)
+- ✅ Client kodu API sözleşmesine %100 uyumlu
+- ✅ TypeScript strict mode pass
+- ✅ Production build successful
+- ❌ Connection test FAIL (placeholder domain: `iss-manager.example.com`)
+- ❌ Actual sync FAIL (credentials yok)
+- ❌ DB persist FAIL (data yok)
+
+**Production DB Evidence:**
+
+```
+integration_configs: base_url = https://iss-manager.example.com/api (PLACEHOLDER)
+automation_jobs: 2 FAILED runs (DNS error: ERR_NAME_NOT_RESOLVED)
+integration_sync_runs: 0 records
+customer_snapshots: 0 records
+```
+
+**Sonuç:** Kod hazır, credentials blocker devam ediyor.
+
+**Rapor:** [docs/releases/CRM-ANALIZ-ISSMANAGER-REAL-API-IMPL-075-FINAL.md](docs/releases/CRM-ANALIZ-ISSMANAGER-REAL-API-IMPL-075-FINAL.md)

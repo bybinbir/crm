@@ -500,7 +500,14 @@ export class ISSManagerBrowserClient {
 
       // Step 1: Capture current state BEFORE click
       const beforeClickUrl = this.page.url();
-      const beforeClickHtml = await this.page.content();
+      let beforeClickHtml = '';
+      try {
+        beforeClickHtml = await this.page.content();
+      } catch (e) {
+        this.logger.warn(
+          `Failed to get page content before click: ${(e as Error).message}`
+        );
+      }
       const beforeClickRowCount = await this.page
         .locator('table tbody tr')
         .count();
@@ -510,12 +517,14 @@ export class ISSManagerBrowserClient {
       );
 
       // Save HTML snapshot before click
-      const beforeClickHtmlFile = path.join(
-        this.config.screenshotDir,
-        `before-click-${Date.now()}.html`
-      );
-      fs.writeFileSync(beforeClickHtmlFile, beforeClickHtml);
-      this.logger.log(`HTML snapshot before click: ${beforeClickHtmlFile}`);
+      if (beforeClickHtml) {
+        const beforeClickHtmlFile = path.join(
+          this.config.screenshotDir,
+          `before-click-${Date.now()}.html`
+        );
+        fs.writeFileSync(beforeClickHtmlFile, beforeClickHtml);
+        this.logger.log(`HTML snapshot before click: ${beforeClickHtmlFile}`);
+      }
 
       // Step 2: Setup event listeners with Promise.race strategy
       let download = null;
@@ -601,7 +610,14 @@ export class ISSManagerBrowserClient {
         this.logger.log(`After click screenshot: ${afterClickScreenshot}`);
 
         const afterClickUrl = this.page.url();
-        const afterClickHtml = await this.page.content();
+        let afterClickHtml = '';
+        try {
+          afterClickHtml = await this.page.content();
+        } catch (e) {
+          this.logger.warn(
+            `Failed to get page content after click: ${(e as Error).message}`
+          );
+        }
         const afterClickRowCount = await this.page
           .locator('table tbody tr')
           .count();
@@ -611,12 +627,14 @@ export class ISSManagerBrowserClient {
         );
 
         // Save HTML snapshot after click
-        const afterClickHtmlFile = path.join(
-          this.config.screenshotDir,
-          `after-click-${Date.now()}.html`
-        );
-        fs.writeFileSync(afterClickHtmlFile, afterClickHtml);
-        this.logger.log(`HTML snapshot after click: ${afterClickHtmlFile}`);
+        if (afterClickHtml) {
+          const afterClickHtmlFile = path.join(
+            this.config.screenshotDir,
+            `after-click-${Date.now()}.html`
+          );
+          fs.writeFileSync(afterClickHtmlFile, afterClickHtml);
+          this.logger.log(`HTML snapshot after click: ${afterClickHtmlFile}`);
+        }
 
         // Step 6: Poll for new row in table (file generation might be async)
         this.logger.log('Polling for new file in table...');

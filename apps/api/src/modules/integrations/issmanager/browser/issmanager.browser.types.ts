@@ -16,7 +16,7 @@ export interface BrowserConfig {
 export interface LoginResult {
   success: boolean;
   message: string;
-  sessionCookies?: any[];
+  sessionCookies?: Array<{ name: string; value: string; domain: string }>;
   landingUrl?: string;
   screenshot?: string;
   error?: string;
@@ -54,4 +54,51 @@ export interface BrowserAutomationConfig {
   retryAttempts: number;
   retryDelay: number;
   artifactRetentionDays: number;
+}
+
+/**
+ * Task 081 - Download mechanism analysis types
+ */
+export interface ButtonAnalysis {
+  index: number;
+  tagName: string;
+  outerHTML: string;
+  innerText: string;
+  href: string | null;
+  onclick: string | null;
+  dataAttributes: Record<string, string>;
+  parentRowHTML: string;
+  boundingBox: { x: number; y: number; width: number; height: number } | null;
+  nearestFormAction: string | null;
+  nearestFormMethod: string | null;
+  nearestFormTarget: string | null;
+}
+
+export interface NetworkInterception {
+  type: 'fetch' | 'xhr' | 'window.open' | 'createObjectURL' | 'form.submit';
+  timestamp: number;
+  url: string;
+  method?: string;
+  status?: number;
+  contentType?: string;
+  contentDisposition?: string;
+  responseSize?: number;
+  callStack?: string;
+}
+
+export interface DownloadAttempt {
+  strategy:
+    | 'locator.click'
+    | 'elementHandle.click'
+    | 'dispatchEvent'
+    | 'evaluate.click'
+    | 'form.submit'
+    | 'authenticated.http';
+  timestamp: number;
+  success: boolean;
+  networkActivity: NetworkInterception[];
+  downloadEventTriggered: boolean;
+  filePath?: string;
+  fileSize?: number;
+  error?: string;
 }

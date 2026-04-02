@@ -43,6 +43,7 @@
     "@nestjs/cli": "^10.4.9",
     "@nestjs/schematics": "^11.0.9",
     "@nestjs/testing": "^10.4.15",
+    "@playwright/test": "^1.58.2",
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.14",

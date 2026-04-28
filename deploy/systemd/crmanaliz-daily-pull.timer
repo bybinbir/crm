@@ -1,0 +1,30 @@
+# /etc/systemd/system/crmanaliz-daily-pull.timer
+# Drives crmanaliz-daily-pull.service once per day.
+#
+# Schedule rationale:
+#   - 02:30 local time: ISS Manager v2 backend is least busy at night;
+#     yesterday's invoices are stable (the company stops issuing well
+#     before midnight).
+#   - RandomizedDelaySec=15min: spreads load if multiple environments
+#     share the same upstream.
+#   - Persistent=true: if the box was down at 02:30, run on next boot.
+#
+# Install / verify:
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now crmanaliz-daily-pull.timer
+#   systemctl list-timers crmanaliz-daily-pull.timer
+#   systemctl status crmanaliz-daily-pull.timer
+
+[Unit]
+Description=Daily timer for crmanaliz ISS Manager pull
+Requires=crmanaliz-daily-pull.service
+
+[Timer]
+OnCalendar=*-*-* 02:30:00
+RandomizedDelaySec=15min
+Persistent=true
+Unit=crmanaliz-daily-pull.service
+AccuracySec=1min
+
+[Install]
+WantedBy=timers.target

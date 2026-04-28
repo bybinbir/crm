@@ -18,6 +18,7 @@
     "test:watch": "vitest",
     "smoke": "tsx scripts/smoke.ts",
     "pull:day": "tsx scripts/pull-day.ts",
+    "smoke:pull-day": "tsx scripts/pull-day.ts --dry-run",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",

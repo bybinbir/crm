@@ -5,6 +5,17 @@
 **Önceki teslim:** v0.4.0 (M1–M4 production-ready engineering closure)
 **Hedef:** Production'a açılış öncesi operasyonel sertleştirme + e2e doğrulama
 
+
+## Madde Durumları
+
+| # | Konu | Durum | Commit |
+|---|------|-------|--------|
+| 1 | SESSION_SIGNING_KEY ayrımı | ✅ FULLY CLOSED | a482272 + 4fd8dea |
+| 2 | Günlük cron / systemd timer | ⚠️ PARTIALLY CLOSED (canlı smoke prod credentials bekliyor) | (current) |
+| 3 | Audit Log UI | pending | — |
+| 4 | PDF/Excel Export | pending | — |
+| 5 | Playwright e2e Smoke | pending | — |
+
 ## Giriş Kriterleri (sağlandı)
 
 - [x] `main` HEAD = `aa901f6` (M4 closure commit)

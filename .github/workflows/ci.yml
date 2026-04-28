@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, "feat/**", "fix/**"]
+    branches: [main, "feat/**", "fix/**", "feature/**"]
   pull_request:
     branches: [main]
 
@@ -16,7 +16,8 @@ jobs:
     timeout-minutes: 10
     env:
       # Required by lib/config.ts at import time. CI uses dummy values; no
-      # network calls happen during typecheck/lint/test.
+      # network calls happen during typecheck/lint/test. SESSION_SIGNING_KEY
+      # MUST differ from PII_MASTER_KEY (config superRefine enforces this).
       NODE_ENV: test
       LOG_LEVEL: silent
       ISSMANAGER_BASE_URL: http://example.invalid/api
@@ -24,6 +25,7 @@ jobs:
       ISSMANAGER_CLIENT_SECRET: ci-placeholder
       DATABASE_URL: postgres://u:p@localhost:5432/db
       PII_MASTER_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      SESSION_SIGNING_KEY: fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -51,6 +53,9 @@ jobs:
       - name: Test
         run: pnpm test
 
+      - name: Smoke pull-day (dry-run, no network, no DB)
+        run: pnpm smoke:pull-day
+
   build:
     name: next build
     runs-on: ubuntu-latest
@@ -64,6 +69,7 @@ jobs:
       ISSMANAGER_CLIENT_SECRET: ci-placeholder
       DATABASE_URL: postgres://u:p@localhost:5432/db?sslmode=require
       PII_MASTER_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      SESSION_SIGNING_KEY: fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

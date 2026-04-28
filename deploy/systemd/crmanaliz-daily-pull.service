@@ -1,0 +1,66 @@
+# /etc/systemd/system/crmanaliz-daily-pull.service
+# Daily ISS Manager v2 invoice pull. Triggered by the matching .timer.
+#
+# Install:
+#   sudo cp deploy/systemd/crmanaliz-daily-pull.service /etc/systemd/system/
+#   sudo cp deploy/systemd/crmanaliz-daily-pull.timer   /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now crmanaliz-daily-pull.timer
+#
+# Verify:
+#   systemctl list-timers crmanaliz-daily-pull.timer
+#   journalctl -u crmanaliz-daily-pull.service -n 200 --no-pager
+#
+# Manual run:
+#   sudo systemctl start crmanaliz-daily-pull.service
+#
+# This unit is the FIRST line of automation. Restart=no on purpose: a
+# transient ISS Manager outage should NOT pin a worker; the next timer
+# tick (with Persistent=true) will re-run automatically.
+
+[Unit]
+Description=crmanaliz daily ISS Manager v2 invoice pull
+Documentation=file:///opt/crmanaliz/docs/ops/CRON_SETUP.md
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=crmanaliz
+Group=crmanaliz
+WorkingDirectory=/opt/crmanaliz/current
+EnvironmentFile=/etc/crmanaliz/env
+# pnpm is on PATH for the deploy user; corepack-managed pnpm@9 is fine.
+ExecStart=/usr/bin/env pnpm pull:day
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=crmanaliz-daily-pull
+
+# Treat the run as failed if it doesn't finish in 5 minutes. The 1-day
+# window plus paginated pull should comfortably finish in <60s; 5 min
+# leaves headroom for ISS Manager retry backoff.
+TimeoutStartSec=5min
+Restart=no
+
+# Hardening — least privilege.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+LockPersonality=true
+RestrictRealtime=true
+RestrictNamespaces=true
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources
+# Allow writing to the deploy logs directory if the app writes anything
+# outside of the journal (it shouldn't).
+ReadWritePaths=/var/log/crmanaliz
+
+[Install]
+WantedBy=multi-user.target

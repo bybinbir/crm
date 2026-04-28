@@ -43,6 +43,9 @@ drizzle/meta/_journal.json.tmp
 # Legacy archive (kept locally, not pushed)
 .legacy/
 
+# Quarantine for stray files that do not belong to this repo
+.quarantine_wisp/
+
 # Misc
 *.pem
 .turbo/

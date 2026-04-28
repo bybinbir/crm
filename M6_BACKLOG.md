@@ -33,7 +33,7 @@ Operatör mali raporları farklı kanallara (e-posta, arşiv) iletebilsin.
 - RBAC: `export:csv` capability'si üç format için de geçerli
 - Bundle boyutu artışı kabul edilebilir (PDF/Excel server-side, client'a inmez)
 
-### 2. Playwright E2E Smoke (P1, büyük — 1-2 PR)
+### 2. Playwright E2E Smoke (P1, büyük — 1-2 PR) ⚠️ PARTIALLY CLOSED — see `docs/e2e/PLAYWRIGHT_E2E_REPORT.md`
 
 **Amaç:** Kritik kullanıcı akışlarını sunucu + DB ile uçtan uca test et;
 M5 birim testlerinin yakalayamadığı entegrasyon regresyonlarını yakala.

@@ -15,9 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      # Required by lib/config.ts at import time. CI uses dummy values; no
-      # network calls happen during typecheck/lint/test. SESSION_SIGNING_KEY
-      # MUST differ from PII_MASTER_KEY (config superRefine enforces this).
       NODE_ENV: test
       LOG_LEVEL: silent
       ISSMANAGER_BASE_URL: http://example.invalid/api
@@ -27,34 +24,16 @@ jobs:
       PII_MASTER_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
       SESSION_SIGNING_KEY: fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9.15.9
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20.18.0
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Typecheck
-        run: pnpm typecheck
-
-      - name: Lint
-        run: pnpm lint
-
-      - name: Test
-        run: pnpm test
-
-      - name: Smoke pull-day (dry-run, no network, no DB)
-        run: pnpm smoke:pull-day
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 9.15.9 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 20.18.0, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test
+      - run: pnpm smoke:pull-day
 
   build:
     name: next build
@@ -73,11 +52,69 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9.15.9
+        with: { version: 9.15.9 }
       - uses: actions/setup-node@v4
-        with:
-          node-version: 20.18.0
-          cache: pnpm
+        with: { node-version: 20.18.0, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+
+  e2e:
+    name: playwright e2e
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: crmanaliz
+          POSTGRES_PASSWORD: crmanaliz_e2e
+          POSTGRES_DB: crmanaliz_e2e
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U crmanaliz -d crmanaliz_e2e"
+          --health-interval 3s
+          --health-timeout 3s
+          --health-retries 20
+    env:
+      NODE_ENV: production
+      LOG_LEVEL: info
+      ISSMANAGER_BASE_URL: http://example.invalid/api
+      ISSMANAGER_CLIENT_ID: iss_v2_ci_placeholder
+      ISSMANAGER_CLIENT_SECRET: ci-placeholder
+      DATABASE_URL: postgres://crmanaliz:crmanaliz_e2e@localhost:5432/crmanaliz_e2e?sslmode=disable
+      PII_MASTER_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      SESSION_SIGNING_KEY: fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210
+      E2E_PORT: "3100"
+      E2E_BASE_URL: http://127.0.0.1:3100
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 9.15.9 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 20.18.0, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - name: Migrate test DB
+        run: pnpm db:migrate
+      - name: Seed test DB (deterministic anon)
+        run: pnpm seed:e2e
+      - name: Build
+        run: pnpm build
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Run e2e (Playwright auto-starts next start)
+        run: pnpm e2e
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+      - name: Upload Playwright traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: test-results/
+          retention-days: 7

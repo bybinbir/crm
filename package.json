@@ -19,6 +19,10 @@
     "smoke": "tsx scripts/smoke.ts",
     "pull:day": "tsx scripts/pull-day.ts",
     "smoke:pull-day": "tsx scripts/pull-day.ts --dry-run",
+    "seed:e2e": "tsx scripts/seed-e2e.ts",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui",
+    "e2e:report": "playwright show-report",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
@@ -37,6 +41,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
+    "@playwright/test": "^1.49.1",
     "@tailwindcss/postcss": "^4.0.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",

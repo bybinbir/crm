@@ -1,0 +1,29 @@
+# docker-compose for the e2e suite.
+#
+# Local usage:
+#   docker compose -f docker-compose.e2e.yml up -d postgres
+#   pnpm db:migrate
+#   pnpm seed:e2e
+#   pnpm build && pnpm start -p 3100 &
+#   pnpm e2e
+#   docker compose -f docker-compose.e2e.yml down -v
+#
+# CI uses the GitHub Actions services block instead (see ci.yml e2e job)
+# but this compose file is the canonical local setup.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: crmanaliz
+      POSTGRES_PASSWORD: crmanaliz_e2e
+      POSTGRES_DB: crmanaliz_e2e
+    ports:
+      - "55432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crmanaliz -d crmanaliz_e2e"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    tmpfs:
+      - /var/lib/postgresql/data

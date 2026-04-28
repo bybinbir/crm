@@ -20,6 +20,7 @@ export type Capability =
   | "view:karsilastir"
   | "view:musteriler"
   | "view:odenmemis"
+  | "view:audit-log"
   | "decrypt:pii"
   | "export:csv"
   | "trigger:pull"
@@ -31,6 +32,7 @@ const ROLE_CAPS: Record<Role, ReadonlySet<Capability>> = {
     "view:karsilastir",
     "view:musteriler",
     "view:odenmemis",
+    "view:audit-log",
     "decrypt:pii",
     "export:csv",
     "trigger:pull",

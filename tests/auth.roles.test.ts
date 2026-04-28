@@ -8,14 +8,16 @@ describe("can()", () => {
     expect(can("operator", "export:csv")).toBe(true);
     expect(can("operator", "trigger:pull")).toBe(true);
     expect(can("operator", "admin:users")).toBe(true);
+    expect(can("operator", "view:audit-log")).toBe(true);
   });
 
-  it("analyst can view + decrypt PII but not export or pull", () => {
+  it("analyst can view + decrypt PII but not export, pull, or audit", () => {
     expect(can("analyst", "view:dashboard")).toBe(true);
     expect(can("analyst", "decrypt:pii")).toBe(true);
     expect(can("analyst", "export:csv")).toBe(false);
     expect(can("analyst", "trigger:pull")).toBe(false);
     expect(can("analyst", "admin:users")).toBe(false);
+    expect(can("analyst", "view:audit-log")).toBe(false);
   });
 
   it("viewer is restricted to aggregate dashboards", () => {
@@ -25,6 +27,15 @@ describe("can()", () => {
     expect(can("viewer", "view:odenmemis")).toBe(false);
     expect(can("viewer", "decrypt:pii")).toBe(false);
     expect(can("viewer", "export:csv")).toBe(false);
+    expect(can("viewer", "view:audit-log")).toBe(false);
+  });
+
+  it("audit log capability is operator-only", () => {
+    expect(can("operator", "view:audit-log")).toBe(true);
+    expect(can("analyst", "view:audit-log")).toBe(false);
+    expect(can("viewer", "view:audit-log")).toBe(false);
+    expect(can(null, "view:audit-log")).toBe(false);
+    expect(can(undefined, "view:audit-log")).toBe(false);
   });
 
   it("returns false for unknown / null role", () => {

@@ -11,10 +11,10 @@
 | # | Konu | Durum | Commit |
 |---|------|-------|--------|
 | 1 | SESSION_SIGNING_KEY ayrımı | ✅ FULLY CLOSED | a482272 + 4fd8dea |
-| 2 | Günlük cron / systemd timer | ⚠️ PARTIALLY CLOSED (canlı smoke prod credentials bekliyor) | (current) |
-| 3 | Audit Log UI | pending | — |
-| 4 | PDF/Excel Export | pending | — |
-| 5 | Playwright e2e Smoke | pending | — |
+| 2 | Günlük cron / systemd timer | ⚠️ PARTIALLY CLOSED (canlı smoke prod credentials bekliyor) | d9a04fe |
+| 3 | Audit Log UI | ✅ FULLY CLOSED | (current) |
+| 4 | PDF/Excel Export | → M6 (taşındı) | M6_BACKLOG.md § 1 |
+| 5 | Playwright e2e Smoke | → M6 (taşındı) | M6_BACKLOG.md § 2 |
 
 ## Giriş Kriterleri (sağlandı)
 

@@ -1,12 +1,6 @@
 /**
- * KPI card — the dashboard's primary visual unit.
- *
- * Designed to be readable in three seconds:
- *   - Tertiary label (small caps, muted)
- *   - Primary numeric (large, tabular, tight tracking)
- *   - Optional subtext (delta vs previous period, units, qualifier)
- *
- * No icons, no chartjunk. Negative space and typography do the work.
+ * KPI card — the dashboard's primary visual unit. Premium typography +
+ * tabular numerals. Pass nothing for `value` to render a loading skeleton.
  */
 import * as React from "react";
 
@@ -29,15 +23,8 @@ const toneClass: Record<KpiTone, string> = {
   negative: "text-[color:var(--color-negative)]",
 };
 
-export function KpiCard({
-  label,
-  value,
-  unit,
-  hint,
-  delta,
-  tone = "neutral",
-  loading = false,
-}: KpiCardProps): React.ReactElement {
+export function KpiCard(props: KpiCardProps): React.ReactElement {
+  const tone = props.tone ?? "neutral";
   return (
     <article
       className={[
@@ -45,29 +32,23 @@ export function KpiCard({
         "rounded-[var(--radius-card)]",
         "border border-[color:var(--color-border)]",
         "bg-[color:var(--color-surface-1)]",
-        "px-6 pt-5 pb-6",
+        "px-6 pt-5 pb-6 min-h-[160px]",
         "transition-colors hover:bg-[color:var(--color-surface-2)]",
-        "min-h-[160px]",
       ].join(" ")}
     >
       <header className="flex items-baseline justify-between">
         <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-[color:var(--color-fg-3)]">
-          {label}
+          {props.label}
         </span>
-        {delta ? (
-          <span
-            className={[
-              "text-xs font-medium tabular-nums",
-              toneClass[tone],
-            ].join(" ")}
-          >
-            {delta}
+        {props.delta ? (
+          <span className={["text-xs font-medium tabular-nums", toneClass[tone]].join(" ")}>
+            {props.delta}
           </span>
         ) : null}
       </header>
 
       <div className="mt-6 flex items-baseline gap-1.5">
-        {loading ? (
+        {props.loading ? (
           <span
             aria-hidden
             className="numeric block h-9 w-24 animate-pulse rounded-md bg-[color:var(--color-surface-3)]"
@@ -75,20 +56,20 @@ export function KpiCard({
         ) : (
           <>
             <span className="numeric text-4xl font-semibold tracking-[var(--tracking-tighter)] text-[color:var(--color-fg-0)]">
-              {value ?? "—"}
+              {props.value ?? "—"}
             </span>
-            {unit ? (
+            {props.unit ? (
               <span className="text-base font-medium text-[color:var(--color-fg-2)]">
-                {unit}
+                {props.unit}
               </span>
             ) : null}
           </>
         )}
       </div>
 
-      {hint ? (
+      {props.hint ? (
         <p className="mt-3 text-xs leading-relaxed text-[color:var(--color-fg-3)]">
-          {hint}
+          {props.hint}
         </p>
       ) : null}
     </article>

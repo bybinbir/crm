@@ -1,9 +1,26 @@
 /**
- * GET /api/export/odenmemis — CSV download. RBAC: export:csv. Audited.
+ * GET /api/export/odenmemis — multi-format export of the unpaid list.
+ *
+ *   ?format=csv    (default; backward-compatible with M3)
+ *   ?format=xlsx   (Excel native, exceljs)
+ *   ?format=excel  (alias)
+ *   ?format=pdf    (pdfkit, A4 landscape table)
+ *
+ * RBAC: `export:csv` capability covers all three formats — the gate is
+ * "can this user export this dataset", not the byte format. Audited.
  */
 import type { NextRequest } from "next/server";
 import { listUnpaidCustomers } from "@/lib/analiz/churn";
 import { csvDate, csvTRY, toCsv, type CsvColumn } from "@/lib/export/csv";
+import { buildUnpaidWorkbook, type UnpaidExportRow } from "@/lib/export/xlsx";
+import { buildUnpaidPdf } from "@/lib/export/pdf";
+import {
+  contentTypeFor,
+  extensionFor,
+  parseExportFormat,
+  safeDownloadFilename,
+  type ExportFormat,
+} from "@/lib/export/format";
 import { getDb, schema } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { AuthError, requireCapability } from "@/lib/auth";
@@ -11,18 +28,7 @@ import { AuthError, requireCapability } from "@/lib/auth";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-type Row = {
-  aboneNo: string;
-  unvan: string | null;
-  ilce: string | null;
-  mahalle: string | null;
-  paketAdi: string | null;
-  sonAktiflikTarihi: Date | null;
-  borc: number;
-  faturaSayisi: number;
-};
-
-const columns: CsvColumn<Row>[] = [
+const csvColumns: CsvColumn<UnpaidExportRow>[] = [
   { key: "aboneNo", header: "Abone No", format: (r) => r.aboneNo },
   { key: "unvan", header: "Müşteri", format: (r) => r.unvan ?? "" },
   { key: "ilce", header: "İlçe", format: (r) => r.ilce ?? "" },
@@ -34,13 +40,26 @@ const columns: CsvColumn<Row>[] = [
 ];
 
 export async function GET(request: NextRequest): Promise<Response> {
+  // RBAC — same capability for csv/xlsx/pdf.
   try {
     await requireCapability("export:csv");
   } catch (e) {
     if (e instanceof AuthError) return new Response(e.message, { status: e.status });
     throw e;
   }
-  let rows: Row[];
+
+  const url = new URL(request.url);
+  const formatRaw = url.searchParams.get("format");
+  const parsed = parseExportFormat(formatRaw);
+  if (parsed && typeof parsed === "object" && "unknown" in parsed) {
+    return new Response(
+      `bilinmeyen format: ${parsed.unknown}. desteklenen: csv, xlsx, excel, pdf`,
+      { status: 400, headers: { "Content-Type": "text/plain; charset=utf-8" } }
+    );
+  }
+  const fmt: ExportFormat = parsed ?? "csv";
+
+  let rows: UnpaidExportRow[];
   try {
     const list = await listUnpaidCustomers(30, { decrypt: true });
     rows = list.map((r) => ({
@@ -55,39 +74,45 @@ export async function GET(request: NextRequest): Promise<Response> {
     }));
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    logger.error({ err: msg }, "csv export failed");
+    logger.error({ err: msg, format: fmt }, "export failed");
     return new Response(`export failed: ${msg}`, { status: 500 });
   }
 
-  const csv = toCsv(rows, columns);
-  await audit(rows.length, request).catch(() => undefined);
+  const filename = safeDownloadFilename("odenmemis", extensionFor(fmt));
 
-  return new Response(csv, {
+  let body: BodyInit;
+  const contentType = contentTypeFor(fmt);
+
+  if (fmt === "csv") {
+    body = toCsv(rows, csvColumns);
+  } else if (fmt === "xlsx") {
+    const buf = await buildUnpaidWorkbook(rows);
+    body = new Uint8Array(buf);
+  } else {
+    // pdf
+    const buf = await buildUnpaidPdf(rows);
+    body = new Uint8Array(buf);
+  }
+
+  await audit(rows.length, fmt, request).catch(() => undefined);
+
+  return new Response(body, {
     status: 200,
     headers: {
-      "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="odenmemis-${stamp()}.csv"`,
+      "Content-Type": contentType,
+      "Content-Disposition": `attachment; filename="${filename}"`,
       "Cache-Control": "no-store",
     },
   });
 }
 
-async function audit(count: number, req: NextRequest): Promise<void> {
+async function audit(count: number, fmt: ExportFormat, req: NextRequest): Promise<void> {
   const db = getDb();
   await db.insert(schema.auditEvents).values({
-    aksiyon: "export_odenmemis_csv",
+    aksiyon: `export_odenmemis_${fmt}`,
     kaynak: "/api/export/odenmemis",
     sonuc: "success",
     requestId: `count=${count}`,
     ip: req.headers.get("x-forwarded-for") ?? null,
   });
-}
-
-function stamp(): string {
-  const d = new Date();
-  return [
-    d.getFullYear(),
-    String(d.getMonth() + 1).padStart(2, "0"),
-    String(d.getDate()).padStart(2, "0"),
-  ].join("-");
 }

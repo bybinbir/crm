@@ -7,7 +7,7 @@ deploy + ISS Manager pull doğrulamasını tamamlamak.
 
 ## Madde Sırası
 
-### 1. PDF / Excel Export (P2, orta — 1 PR)
+### 1. PDF / Excel Export (P2, orta — 1 PR) ✅ FULLY CLOSED — see `M6_EXPORT_REPORT.md`
 
 **Amaç:** M3'te eklenen CSV export'unun PDF ve Excel varyantlarını ekle.
 Operatör mali raporları farklı kanallara (e-posta, arşiv) iletebilsin.

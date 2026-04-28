@@ -10,14 +10,9 @@ const TR_DATE = new Intl.DateTimeFormat("tr-TR", {
   month: "long",
   year: "numeric",
 });
-
 const NUM = new Intl.NumberFormat("tr-TR");
 
-export function HomeView({
-  snap,
-}: {
-  snap: DashboardSnapshot;
-}): React.ReactElement {
+export function HomeView({ snap }: { snap: DashboardSnapshot }): React.ReactElement {
   const today = TR_DATE.format(new Date());
   const summary = summarise(snap.daily);
 
@@ -71,10 +66,7 @@ export function HomeView({
         />
       </section>
 
-      <section
-        aria-label="Detay"
-        className="mt-12 grid grid-cols-1 gap-4 lg:grid-cols-2"
-      >
+      <section aria-label="Detay" className="mt-12 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <article className="rounded-[var(--radius-lg)] border border-[color:var(--color-border)] bg-[color:var(--color-surface-1)] p-6">
           <header className="flex items-baseline justify-between">
             <h2 className="text-base font-semibold tracking-[var(--tracking-tight)] text-[color:var(--color-fg-0)]">
@@ -112,22 +104,19 @@ export function HomeView({
             Hızlı Erişim
           </h2>
           <ul className="mt-4 flex flex-col gap-3">
-            <QuickLink
-              href="/musteriler"
-              title="Müşteri Arama"
-              sub="ISS Manager üzerinde isim/telefon"
-            />
-            <QuickLink
-              href="/odenmemis"
-              title="Ödenmemiş Müşteriler"
-              sub="Risk havuzu, ilçe bazlı dağılım"
-            />
+            <QuickLink href="/musteriler" title="Müşteri Arama" sub="ISS Manager üzerinde" />
+            <QuickLink href="/odenmemis" title="Ödenmemiş Müşteriler" sub="Risk havuzu" />
+            <QuickLink href="/karsilastir" title="Karşılaştırma" sub="MoM/YoY · LTV" />
+            <QuickLink href="/api/export/odenmemis" title="CSV İndir" sub="Excel uyumlu" />
           </ul>
         </article>
       </section>
 
-      <footer className="mt-16 border-t border-[color:var(--color-border)] pt-6 text-xs text-[color:var(--color-fg-3)]">
-        crmanaliz · KVKK kapsamında — tüm PII şifreli saklanır.
+      <footer className="mt-16 flex items-center justify-between border-t border-[color:var(--color-border)] pt-6 text-xs text-[color:var(--color-fg-3)]">
+        <span>crmanaliz · KVKK kapsamında — tüm PII şifreli saklanır.</span>
+        <a href="/cikis" className="hover:text-[color:var(--color-fg-1)]">
+          Çıkış →
+        </a>
       </footer>
     </main>
   );

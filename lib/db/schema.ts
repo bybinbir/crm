@@ -1,21 +1,11 @@
 /**
  * Drizzle schema — crmanaliz datastore.
  *
- * Domain conventions (per brief):
- *   - Tables and column names are Turkish (`musteriler`, `faturalar`,
- *     `pull_runs`, `audit_events`).
- *   - Sensitive PII is encrypted at rest (column-level AES-256-GCM) — those
- *     columns end with `_enc` and store BYTEA blobs produced by
- *     `lib/crypto/encrypt.ts`.
- *   - Aggregable, non-PII signals (paket adı, ilçe, mahalle, durum) are kept
- *     in plain columns so analytics queries can group by them without going
- *     through decryption.
- *   - `faturalar` is append-only; mutations are forbidden by application
- *     code, enforced by absence of `updateOneByFaturaNo`-style helpers.
- *
- * Migration files live under `drizzle/`; this schema is the source of truth
- * for `drizzle-kit generate`. The first migration is checked in by hand
- * (drizzle/0001_initial.sql) so the team can review SQL diffs in PRs.
+ * - Tables and columns are Turkish (`musteriler`, `faturalar`, …).
+ * - Sensitive PII columns end with `_enc` and store BYTEA blobs from
+ *   lib/crypto/encrypt.ts (AES-256-GCM).
+ * - Aggregable, non-PII fields stay plain so analytics can group by them.
+ * - `faturalar` is append-only at the application layer.
  */
 import {
   bigserial,
@@ -30,56 +20,36 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
-/**
- * Postgres BYTEA helper — Drizzle ships a string-coerced bytea by default
- * (postgres-js returns Buffer), but for clarity we declare it ourselves.
- */
 const bytea = customType<{ data: Buffer; notNull: false; default: false }>({
   dataType: () => "bytea",
 });
 
-/**
- * INET column for IP addresses (audit log).
- */
 const inet = customType<{ data: string; notNull: false; default: false }>({
   dataType: () => "inet",
 });
 
-/* ─────────────────────────────────────────────────────────────────────────────
- * musteriler — customer snapshot (latest known state per abone_no)
- * ────────────────────────────────────────────────────────────────────────── */
+/* ─── musteriler ──────────────────────────────────────────────────────── */
 export const musteriler = pgTable(
   "musteriler",
   {
     aboneNo: text("abone_no").primaryKey(),
-
-    // Encrypted PII. Decrypt only inside the request scope; never log.
     isimEnc: bytea("isim_enc"),
     soyisimEnc: bytea("soyisim_enc"),
     firmaUnvanEnc: bytea("firma_unvan_enc"),
     telefon1Enc: bytea("telefon_1_enc"),
     emailEnc: bytea("email_enc"),
-
-    // Geographic — non-PII, used for segmentation.
     il: text("il"),
     ilce: text("ilce"),
     mahalle: text("mahalle"),
-
-    // Plan / status.
     paketAdi: text("paket_adi"),
     sonAktiflikTarihi: timestamp("son_aktiflik_tarihi", { withTimezone: true }),
     durum: text("durum"),
-
-    // Lifecycle.
     ilkGorulme: timestamp("ilk_gorulme", { withTimezone: true })
       .notNull()
       .defaultNow(),
     sonGuncellenme: timestamp("son_guncellenme", { withTimezone: true })
       .notNull()
       .defaultNow(),
-
-    // SHA-256 of the concatenated raw PII triplet — used for dedupe / churn
-    // detection without ever decrypting the per-row blobs.
     hashPii: text("hash_pii"),
   },
   (t) => [
@@ -88,9 +58,7 @@ export const musteriler = pgTable(
   ]
 );
 
-/* ─────────────────────────────────────────────────────────────────────────────
- * faturalar — append-only invoice timeseries
- * ────────────────────────────────────────────────────────────────────────── */
+/* ─── faturalar ──────────────────────────────────────────────────────── */
 export const faturalar = pgTable(
   "faturalar",
   {
@@ -106,11 +74,7 @@ export const faturalar = pgTable(
     durum: text("durum").notNull(),
     odemeTuru: text("odeme_turu"),
     urunler: text("urunler"),
-    // JSONB — small array, indexed only ad-hoc; encryption not applied
-    // (line-items contain product names + numbers, no direct PII).
     kalemlerJson: text("kalemler_json").notNull(),
-    // Encrypted invoice header PII (full name + full address — not masked
-    // upstream, so MUST be encrypted at rest).
     unvanEnc: bytea("unvan_enc"),
     adresEnc: bytea("adres_enc"),
     eklenme: timestamp("eklenme", { withTimezone: true })
@@ -125,9 +89,7 @@ export const faturalar = pgTable(
   ]
 );
 
-/* ─────────────────────────────────────────────────────────────────────────────
- * pull_runs — operational audit of every external pull
- * ────────────────────────────────────────────────────────────────────────── */
+/* ─── pull_runs ──────────────────────────────────────────────────────── */
 export const pullRuns = pgTable("pull_runs", {
   id: bigserial("id", { mode: "bigint" }).primaryKey(),
   baslangic: timestamp("baslangic", { withTimezone: true })
@@ -139,14 +101,11 @@ export const pullRuns = pgTable("pull_runs", {
   endpoint: text("endpoint").notNull(),
   kayitSayisi: integer("kayit_sayisi").notNull().default(0),
   hataSayisi: integer("hata_sayisi").notNull().default(0),
-  // 'running' | 'succeeded' | 'failed'
   status: text("status").notNull(),
   hataDetay: text("hata_detay"),
 });
 
-/* ─────────────────────────────────────────────────────────────────────────────
- * audit_events — user / system access trail
- * ────────────────────────────────────────────────────────────────────────── */
+/* ─── audit_events ───────────────────────────────────────────────────── */
 export const auditEvents = pgTable(
   "audit_events",
   {
@@ -157,16 +116,28 @@ export const auditEvents = pgTable(
     kaynak: text("kaynak").notNull(),
     requestId: text("request_id"),
     ip: inet("ip"),
-    // 'success' | 'error'
     sonuc: text("sonuc").notNull(),
   },
+  (t) => [index("idx_audit_ts").on(t.ts)]
+);
+
+/* ─── kullanicilar (M4 RBAC) ─────────────────────────────────────────── */
+export const kullanicilar = pgTable(
+  "kullanicilar",
+  {
+    id: bigserial("id", { mode: "bigint" }).primaryKey(),
+    email: text("email").notNull(),
+    passwordHash: text("password_hash").notNull(),
+    role: text("role").notNull(),
+    olusturulma: timestamp("olusturulma", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    sonGiris: timestamp("son_giris", { withTimezone: true }),
+  },
   (t) => [
-    // Most queries scan recent events first.
-    index("idx_audit_ts").on(t.ts),
+    uniqueIndex("uq_kullanicilar_email").on(t.email),
+    index("idx_kullanicilar_email").on(t.email),
   ]
 );
 
-// Composite identity for the per-customer-per-month aggregates table that
-// will land in M2 — keep the helper around so future schema files have a
-// canonical (abone_no, year, month) PK example.
 export const _examplePk = primaryKey;

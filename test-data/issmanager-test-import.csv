@@ -1,6 +1,0 @@
-abone_no,isim,email,telefon,adres,fatura_adres,tarife,tarife_fiyat,bitis_tarihi,bakiye
-1000000001,Akın Özgen,akin@example.com,5551234567,Güzeloba Mah. Lara Cd. No:7/7 Muratpaşa/Antalya,Güzeloba Mah. Lara Cd. No:7/7 Muratpaşa/Antalya,Düziçi-10Mb,70.00000,2023-01-07 22:59:21,123.00000
-1000000003,Mehmet Yılmaz,mehmet@example.com,5559876543,Konyaaltı Mah. Atatürk Cad. No:45 Konyaaltı/Antalya,Konyaaltı Mah. Atatürk Cad. No:45 Konyaaltı/Antalya,Fiber-100Mb,150.00000,2024-06-15 12:30:00,50.00000
-1000000004,Ayşe Demir,ayse@example.com,5557654321,Muratpaşa Mah. İnönü Blv. No:23/8 Muratpaşa/Antalya,Muratpaşa Mah. İnönü Blv. No:23/8 Muratpaşa/Antalya,Standard-50Mb,100.00000,2024-12-20 18:45:00,0.00000
-1000000005,Fatma Kaya,fatma@example.com,5553456789,Kepez Mah. Fabrikalar Cad. No:12 Kepez/Antalya,Kepez Mah. Fabrikalar Cad. No:12 Kepez/Antalya,Business-200Mb,300.00000,2025-03-10 09:00:00,250.00000
-1000000006,Ali Çelik,ali@example.com,5551122334,Lara Mah. Güneş Sok. No:5/3 Muratpaşa/Antalya,Lara Mah. Güneş Sok. No:5/3 Muratpaşa/Antalya,Premium-500Mb,500.00000,2025-08-25 14:20:00,1000.00000

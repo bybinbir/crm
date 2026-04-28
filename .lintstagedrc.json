@@ -1,7 +1,0 @@
-{
-  "*.{ts,tsx,js,jsx}": [
-    "bash -c 'if [[ ! $0 =~ (test|spec|jest\\.setup|prisma/seed|prisma/migrations) ]]; then eslint --fix \"$0\"; fi'",
-    "prettier --write"
-  ],
-  "*.{json,md,yml,yaml}": ["prettier --write"]
-}

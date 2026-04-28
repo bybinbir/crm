@@ -2,107 +2,47 @@
 node_modules/
 .pnp
 .pnp.js
+.pnpm-store/
 
-# Testing
-coverage/
-.nyc_output/
-playwright-report/
-test-results/
-playwright/.cache/
-
-# Production
-build/
-dist/
+# Build output
 .next/
 out/
+dist/
+build/
+*.tsbuildinfo
+next-env.d.ts
 
-# Environment
+# Test/coverage
+coverage/
+.nyc_output/
+
+# Env / secrets — NEVER commit
 .env
 .env.local
+.env.*.local
+.env.production
 .env.development.local
-.env.test.local
-.env.production.local
-*.local
-
-# Deployment metadata
-.last-deploy
-
-# Backups
-backups/
 
 # Logs
-logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
-yarn-error.log*
 pnpm-debug.log*
-lerna-debug.log*
 
-# OS
+# Editor / OS
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
 .DS_Store
 Thumbs.db
-*.swp
-*.swo
-*~
 
-# IDE
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-!.vscode/*.code-snippets
-.idea/
-*.sublime-project
-*.sublime-workspace
+# Drizzle
+drizzle/meta/_journal.json.tmp
 
-# Turborepo
-.turbo/
-
-# Debug
-*.tsbuildinfo
-.eslintcache
-
-# Deployment
-.deployment
+# Legacy archive (kept locally, not pushed)
+.legacy/
 
 # Misc
 *.pem
-.cache/
-temp/
-tmp/
-
-# Database
-*.db
-*.sqlite
-*.sqlite3
-
-# Secrets (double protection)
-secrets/
-*.key
-*.secret
-credentials.*
-!credentials.example.*
-
-# Debug and verification scripts
-scripts/debug-*.js
-scripts/verify-*.js
-scripts/verify-*.ts
-scripts/fix-*.js
-
-# Temporary development utilities (ad-hoc testing/debugging)
-*-debug.py
-*-test.py
-*-verify.py
-add-*.py
-check-*.py
-test-*.py
-verify-*.py
-
-# Migration artifacts and bundles
-*.bundle
-*.tar.gz
-*.tar.gz.sha256
-*-migration/
-*MIGRATION_BUNDLE.md
+.turbo/

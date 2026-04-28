@@ -1,75 +1,35 @@
-import js from '@eslint/js';
-import tsPlugin from '@typescript-eslint/eslint-plugin';
-import tsParser from '@typescript-eslint/parser';
-import prettierConfig from 'eslint-config-prettier';
-import importPlugin from 'eslint-plugin-import';
+import { FlatCompat } from "@eslint/eslintrc";
+import { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 
-export default [
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const compat = new FlatCompat({ baseDirectory: __dirname });
+
+const config = [
+  ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
-    ignores: [
-      '**/node_modules/**',
-      '**/dist/**',
-      '**/build/**',
-      '**/.next/**',
-      '**/.turbo/**',
-      '**/coverage/**',
-      '**/pnpm-lock.yaml',
-    ],
+    ignores: [".next/**", "node_modules/**", ".legacy/**", "drizzle/**"],
   },
-  js.configs.recommended,
   {
-    files: ['**/*.ts', '**/*.tsx'],
-    languageOptions: {
-      parser: tsParser,
-      parserOptions: {
-        ecmaVersion: 'latest',
-        sourceType: 'module',
-        project: [
-          './tsconfig.json',
-          './apps/*/tsconfig.json',
-          './packages/*/tsconfig.json',
-        ],
-      },
-      globals: {
-        React: 'readonly',
-        fetch: 'readonly',
-        console: 'readonly',
-        process: 'readonly',
-        window: 'readonly',
-        document: 'readonly',
-      },
-    },
-    plugins: {
-      '@typescript-eslint': tsPlugin,
-      import: importPlugin,
-    },
     rules: {
-      ...tsPlugin.configs.recommended.rules,
-      '@typescript-eslint/no-unused-vars': [
-        'error',
-        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      // Console prohibited — use lib/logger.
+      "no-console": ["error", { allow: ["error"] }],
+      // Forbid `any` unless explicitly justified.
+      "@typescript-eslint/no-explicit-any": "error",
+      // Unused vars must be prefixed with `_`.
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
       ],
-      '@typescript-eslint/consistent-type-imports': [
-        'error',
-        { prefer: 'type-imports', fixStyle: 'separate-type-imports' },
-      ],
-      'import/order': [
-        'error',
-        {
-          groups: [
-            'builtin',
-            'external',
-            'internal',
-            'parent',
-            'sibling',
-            'index',
-          ],
-          'newlines-between': 'always',
-          alphabetize: { order: 'asc', caseInsensitive: true },
-        },
-      ],
-      'no-console': ['warn', { allow: ['warn', 'error'] }],
     },
   },
-  prettierConfig,
+  {
+    // Smoke / scripts may use console for direct CLI output.
+    files: ["scripts/**/*.ts"],
+    rules: { "no-console": "off" },
+  },
 ];
+
+export default config;

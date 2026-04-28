@@ -1,264 +1,141 @@
-# CRM Analiz Platform
+# crmanaliz
 
-[![CI](https://github.com/YOUR_ORG/crmanaliz/workflows/CI/badge.svg)](https://github.com/YOUR_ORG/crmanaliz/actions)
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](CHANGELOG.md)
-[![License](https://img.shields.io/badge/license-proprietary-red.svg)]()
+binbirnet (Anamur/Mersin ISP) operatörü için CRM analiz panosu. ISS Manager
+v2 API'sinden müşteri ve fatura verisi çekip rafine, sade, "komuta merkezi"
+hissinde bir Next.js dashboard'da gösterir.
 
-ISSmanager CRM Analytics & Decision Support Platform - Mahalle bazlı müşteri kalite analizi, personel verimliliği ve yönetici karar destek sistemi.
+> Bu repo tek bir Next.js uygulamasıdır. Frontend, server action'lar, API
+> route'ları, smoke script ve Drizzle migration'ları aynı kod tabanında yaşar.
+> Monorepo yok — `lib/` altında alan-bazlı paketler var.
 
-## 🎯 Proje Amacı
+## Mimari Özet
 
-CRM Analiz, ISSmanager'ın üzerine oturan bir **analitik ve karar destek katmanıdır**. ISSmanager'ın yerini almaz; ondan veri çeker, normalize eder, skorlar ve raporlar.
+| Katman | Teknoloji |
+|---|---|
+| Dil | TypeScript 5 strict (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`) |
+| Frontend | Next.js 15 App Router + Tailwind CSS 4 |
+| Server | Server Actions + Route Handlers |
+| DB | PostgreSQL 16 + Drizzle ORM + postgres-js |
+| Validation | Zod (env, API yanıtları, form input) |
+| Logger | pino + KVKK redaction |
+| Test | Vitest |
+| Pkg | pnpm 9 |
 
-### Temel Özellikler
+## Hızlı Başlangıç
 
-- 📍 **Mahalle Bazlı Müşteri Kalite Skoru** - Coğrafi segmentasyon ve kalite analizi
-- 👥 **Personel Verimliliği** - Performans izleme ve metrikler
-- 📊 **Yönetici Karar Destek** - Analitik ve öngörüler
-- 💰 **Finansal Raporlama** - Gelir, maliyet ve kar analizi
-- 🔄 **ISSmanager Entegrasyonu** - Dashboard üzerinden yapılandırılabilir
-
-## 🚀 Hızlı Başlangıç
-
-### Gereksinimler
-
-- Node.js >=20.0.0
-- pnpm >=9.0.0
-- PostgreSQL 16+
-- Redis 7+
-
-### Kurulum
-
-1. **Depoyu klonlayın**
+Önkoşullar: Node ≥ 20.10, pnpm ≥ 9, çalışan bir PostgreSQL 16, ISS Manager
+v2 panelinden alınmış bir client_id / client_secret.
 
 ```bash
-git clone https://github.com/YOUR_ORG/crmanaliz.git
-cd crmanaliz
-```
-
-2. **Bağımlılıkları yükleyin**
-
-```bash
+# 1) Bağımlılıklar
 pnpm install
-```
 
-3. **Ortam değişkenlerini ayarlayın**
-
-```bash
+# 2) Env şablonu
 cp .env.example .env.local
-# .env.local dosyasını gerçek değerlerle düzenleyin
-```
 
-4. **PostgreSQL ve Redis'i başlatın**
+# 3) Master encryption key üret (32 byte hex)
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+# Çıktıyı .env.local içindeki PII_MASTER_KEY satırına yapıştır.
 
-```bash
-# Ubuntu/Debian
-sudo systemctl start postgresql
-sudo systemctl start redis-server
+# 4) Migration uygula
+pnpm db:migrate
 
-# Veya geliştirme için
-sudo apt install postgresql-16 redis-server
-```
-
-5. **Veritabanını hazırlayın**
-
-```bash
-# PostgreSQL kullanıcısı ve veritabanı oluştur
-sudo -u postgres psql -c "CREATE USER crmanaliz WITH PASSWORD 'dev_password';"
-sudo -u postgres psql -c "CREATE DATABASE crmanaliz OWNER crmanaliz;"
-
-# Migrations çalıştır
-cd apps/api
-pnpm run migration:run
-cd ../..
-```
-
-6. **Geliştirme sunucularını başlatın**
-
-```bash
+# 5) Dashboard'u dev modunda aç
 pnpm dev
+# → http://localhost:3000
 ```
 
-- Web: http://localhost:3000
-- API: http://localhost:4000/api/v1
+## Kalite Kapıları
 
-## 📁 Proje Yapısı
+| Komut | Açıklama |
+|---|---|
+| `pnpm typecheck` | `tsc --noEmit`, strict mode |
+| `pnpm lint` | ESLint flat config, console yasak |
+| `pnpm test` | Vitest — redaction + crypto |
+| `pnpm smoke` | Canlı ISS Manager v2 sağlık kontrolü |
+| `pnpm build` | Production Next.js derleme |
+
+Her PR'da `typecheck + lint + test` yeşil olmalı. CI workflow'u
+`.github/workflows/ci.yml` altında.
+
+## Proje Haritası
 
 ```
 crmanaliz/
-├── apps/
-│   ├── web/              # Next.js 15 web uygulaması
-│   └── api/              # NestJS API sunucusu
-├── packages/
-│   ├── types/            # Paylaşılan TypeScript tipleri
-│   ├── ui/               # Paylaşılan UI bileşenleri
-│   └── config/           # Paylaşılan yapılandırmalar
-├── docs/                 # Proje dokümantasyonu
-├── scripts/              # Yardımcı scriptler
-└── .github/workflows/    # CI/CD pipeline'ları
+├── app/                      Next.js App Router
+│   ├── layout.tsx
+│   ├── page.tsx              Ana pano (KPI grid)
+│   └── globals.css           Premium tema (oklch, Tailwind 4 @theme)
+├── components/
+│   └── dashboard/
+│       └── kpi-card.tsx
+├── lib/
+│   ├── config.ts             Zod-validated env
+│   ├── logger.ts             pino + redaction
+│   ├── issmanager/           Tipli API client
+│   │   ├── auth.ts           Token cache
+│   │   ├── client.ts         IssmanagerClient
+│   │   ├── errors.ts         Hata taksonomisi
+│   │   ├── redaction.ts      KVKK redact utility
+│   │   ├── types.ts          Zod şemaları + TS tipleri
+│   │   └── index.ts
+│   ├── crypto/
+│   │   ├── encrypt.ts        AES-256-GCM kolon şifreleme
+│   │   └── key.ts            Master key loader
+│   └── db/
+│       ├── client.ts         postgres-js + Drizzle
+│       ├── schema.ts         musteriler, faturalar, pull_runs, audit_events
+│       └── index.ts
+├── drizzle/
+│   ├── 0001_initial.sql      İlk migration
+│   └── meta/_journal.json
+├── scripts/
+│   └── smoke.ts              Canlı API sağlık testi
+├── tests/
+│   ├── crypto.test.ts        AES-GCM round-trip
+│   └── redaction.test.ts     PII maskeleme
+└── .github/workflows/
+    └── ci.yml                typecheck + lint + test
 ```
 
-## 🛠️ Komutlar
+## KVKK Notları
 
-### Geliştirme
+ISS Manager v2 `/invoices` endpoint'i **maskelenmemiş** PII döküyor: tam
+isim, tam adres. Bu nedenle:
 
-```bash
-pnpm dev          # Tüm uygulamaları geliştirme modunda çalıştır
-pnpm build        # Tüm uygulamaları derle
-pnpm lint         # Kod kalitesi kontrolü
-pnpm typecheck    # TypeScript tip kontrolü
-pnpm test         # Testleri çalıştır
-pnpm format       # Kod formatla
-pnpm clean        # Build çıktılarını temizle
-```
+- `lib/issmanager/redaction.ts` her log noktasında zorunludur. `pino` config
+  ek olarak path-bazlı redaction yapıyor (`lib/logger.ts`).
+- `musteriler` ve `faturalar` tablosundaki `*_enc` kolonları AES-256-GCM ile
+  şifreli (`lib/crypto/encrypt.ts`). Anahtar `PII_MASTER_KEY` env'inde,
+  asla commit'lenmez.
+- DB connection production'da TLS zorunlu (`sslmode=require`).
+- WRITE endpoint'leri (`/extra-days`, `/invoices/send`) bu kod tabanında
+  yer almaz; tarayıcıdan ISS Manager API'sine doğrudan istek YOK.
+- VERBİS perspektifinden binbirnet veri sorumlusu, crmanaliz veri işleyendir.
+  Sözleşme gerekir.
 
-### Sadece Web App
+## Yasaklar
 
-```bash
-cd apps/web
-pnpm dev          # Next.js dev server
-pnpm build        # Production build
-pnpm start        # Production server
-```
+- WRITE endpoint çağrısı (`/extra-days`, `/invoices/send`)
+- `any` tipi (zorunlu olmadıkça)
+- `console.log` — `lib/logger` kullan
+- Plaintext PII logging
+- Hardcoded secret
+- Browser'dan ISS Manager API'sine doğrudan istek
+- "TODO sonra bakarız"
+- Test edilmemiş "tamam" demek
+- Aşırı abstraction, prematür generikleme
 
-### Sadece API
+## Roadmap
 
-```bash
-cd apps/api
-pnpm dev          # NestJS dev server
-pnpm build        # Production build
-pnpm start        # Production server
-```
+- **M1** (✅ tamamlandı) Repo iskeleti, IssmanagerClient, redaction + tests,
+  Drizzle, AES-256-GCM, smoke script, dashboard kabuğu, CI.
+- **M2** 1 günlük invoice cron pull, müşteri arama sayfası, günlük ciro
+  grafiği, adres parser (Anamur ilçe/mahalle), 30 gün ödememiş müşteri
+  listesi.
+- **M3** LTV, paket bazlı segmentasyon, ay-ay karşılaştırma, PDF/Excel
+  export, RBAC.
 
-## 🏗️ Teknoloji Stack
+## Lisans
 
-| Katman     | Teknoloji            | Versiyon     |
-| ---------- | -------------------- | ------------ |
-| Monorepo   | Turborepo + pnpm     | 2.3+ / 9.15+ |
-| Web        | Next.js (App Router) | 15.1+        |
-| API        | NestJS               | 10.4+        |
-| Dil        | TypeScript           | 5.7+         |
-| Stil       | Tailwind CSS         | 3.4+         |
-| Veritabanı | PostgreSQL           | 16+          |
-| Önbellek   | Redis                | 7+           |
-| Test       | Jest                 | 29+          |
-| CI/CD      | GitHub Actions       | -            |
-| Deployment | systemd              | -            |
-
-Detaylı bilgi için: [docs/STACK.md](docs/STACK.md)
-
-## 📚 Dokümantasyon
-
-- [ARCHITECTURE.md](docs/ARCHITECTURE.md) - Sistem mimarisi
-- [STACK.md](docs/STACK.md) - Teknoloji stack detayları
-- [GIT_WORKFLOW.md](docs/GIT_WORKFLOW.md) - Git iş akışı ve branch stratejisi
-- [SECURITY.md](docs/SECURITY.md) - Güvenlik kuralları
-- [ENVIRONMENT.md](docs/ENVIRONMENT.md) - Ortam kurulumu
-- [DECISIONS.md](docs/DECISIONS.md) - Mimari kararlar (ADR)
-- [DEPLOYMENT.md](docs/DEPLOYMENT.md) - Native systemd deployment guide
-- [CLAUDE.md](CLAUDE.md) - Proje anayasası
-- [task_dash.md](task_dash.md) - Görev panosu
-
-## 🔐 Güvenlik
-
-- ❌ Gerçek credential'lar repository'de bulunmaz
-- ✅ Tüm sırlar ortam değişkenleri ile yönetilir
-- ✅ Dashboard üzerinden güvenli yapılandırma
-- ✅ Denetim logları tüm hassas işlemler için
-- ✅ Şifrelenmiş depolama
-
-Detaylar: [docs/SECURITY.md](docs/SECURITY.md)
-
-## 🧪 Testler
-
-```bash
-# Tüm testleri çalıştır
-pnpm test
-
-# Coverage raporu
-pnpm test:cov
-
-# Watch mode
-pnpm test:watch
-```
-
-## 🌳 Git İş Akışı
-
-### Branch Stratejisi
-
-- `main` - Production
-- `develop` - Integration
-- `feature/*` - Yeni özellikler
-- `fix/*` - Hata düzeltmeleri
-- `refactor/*` - Kod iyileştirmeleri
-- `chore/*` - Bakım işleri
-
-### Commit Kuralı
-
-Conventional Commits kullanılır:
-
-```
-feat(scope): add new feature
-fix(scope): resolve bug
-docs(scope): update documentation
-```
-
-Detaylar: [docs/GIT_WORKFLOW.md](docs/GIT_WORKFLOW.md)
-
-## 📦 Versiyonlama
-
-Semantic Versioning (SemVer) kullanılır:
-
-```bash
-# Changeset oluştur
-pnpm changeset
-
-# Versiyon güncelle
-pnpm version
-
-# Yayınla (build + publish)
-pnpm release
-```
-
-Değişiklikler: [CHANGELOG.md](CHANGELOG.md)
-
-## 🤝 Katkıda Bulunma
-
-1. Feature branch oluşturun (`git checkout -b feature/amazing-feature`)
-2. Değişikliklerinizi commit edin (`git commit -m 'feat: add amazing feature'`)
-3. Branch'i push edin (`git push origin feature/amazing-feature`)
-4. Pull Request açın
-
-## 📄 Lisans
-
-Proprietary - Tüm hakları saklıdır
-
-## 👥 Ekip
-
-Internal Development Team
-
-## 📞 İletişim
-
-Sorularınız için: dev@crmanaliz.local
-
-## 🚀 Production Deployment
-
-Production sunucuya deployment için:
-
-```bash
-# Nginx konfigürasyonu
-sudo cp deployment/nginx/crmanaliz.conf /etc/nginx/sites-available/
-sudo ln -s /etc/nginx/sites-available/crmanaliz.conf /etc/nginx/sites-enabled/
-
-# SSL sertifikası
-sudo certbot --nginx -d analiz.binbirnet.com.tr
-
-# Smoke test
-./deployment/smoke-test.sh https://analiz.binbirnet.com.tr
-```
-
-Detaylı rehber: [deployment/DEPLOYMENT.md](deployment/DEPLOYMENT.md)
-
----
-
-**Not:** Production deployment için güvenlik hardening tamamlandı.
+Lisans belirtilmemiştir. Kod sahibi: malii (binbirnet).

@@ -11,6 +11,8 @@ beforeAll(() => {
   env["DATABASE_URL"] = "postgres://u:p@localhost:5432/db";
   env["PII_MASTER_KEY"] =
     "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+  env["SESSION_SIGNING_KEY"] =
+    "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210";
 });
 
 describe("crypto.encryptString / decryptString", () => {

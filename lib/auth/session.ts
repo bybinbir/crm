@@ -1,21 +1,25 @@
 /**
  * Cookie-based session — minimal, server-only.
  *
- * M3 scope: a single cookie carries `{ role, kullaniciId, exp }` HMAC-signed
- * with `PII_MASTER_KEY` (re-uses the existing master key; M4'te dedikated
- * `SESSION_SIGNING_KEY` ayrılır). Cookies set with `HttpOnly`, `SameSite=Lax`,
- * `Secure` in production.
+ * A single cookie carries `{ role, kullaniciId, exp }` HMAC-signed with
+ * `SESSION_SIGNING_KEY` (M5). The signing key is INTENTIONALLY DECOUPLED
+ * from `PII_MASTER_KEY` so a leak of one secret does not cascade to the
+ * other (see `lib/auth/key.ts` doc comment).
  *
- * No login form yet — the session is provisioned via the (also TODO) admin
- * console or a CLI seed. For dev convenience, `DEV_FORCE_ROLE` env can
- * shortcut the cookie (ONLY in NODE_ENV=development, ONLY readable on
- * localhost). This is a deliberate ergonomic concession; production code
- * never honours it.
+ * Pre-M5 sessions signed with `PII_MASTER_KEY` will fail verification
+ * after rollout — that's an accepted security-hardening side effect;
+ * affected users simply re-authenticate.
+ *
+ * Cookies set with `HttpOnly`, `SameSite=Lax`, `Secure` in production.
+ *
+ * For dev convenience, `DEV_FORCE_ROLE` env can shortcut the cookie
+ * (ONLY in NODE_ENV=development). Production code never honours it.
  */
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies, headers } from "next/headers";
 import { Buffer } from "node:buffer";
 import { config } from "@/lib/config";
+import { getSessionSigningKey } from "./key";
 import { isRole, type Role } from "./roles";
 
 const COOKIE_NAME = "crmanaliz.sess";
@@ -126,8 +130,10 @@ function verify(token: string): Session | null {
 }
 
 function hmac(payload: string): Buffer {
-  const key = Buffer.from(config.piiMasterKeyHex, "hex");
-  return createHmac("sha256", key).update(payload).digest();
+  // SESSION_SIGNING_KEY is reserved for this purpose and MUST NOT reuse
+  // PII_MASTER_KEY. Validation of both invariants happens at config load
+  // (see lib/config.ts superRefine + lib/auth/key.ts).
+  return createHmac("sha256", getSessionSigningKey()).update(payload).digest();
 }
 
 function base64url(buf: Buffer): string {

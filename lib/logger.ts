@@ -24,6 +24,8 @@ const REDACT_PATHS: readonly string[] = [
   "access_token",
   "PII_MASTER_KEY",
   "piiMasterKeyHex",
+  "SESSION_SIGNING_KEY",
+  "sessionSigningKeyHex",
 
   // Customer fields (search/find — already API-masked but redact anyway)
   "*.isim",

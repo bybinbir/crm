@@ -53,6 +53,8 @@ export const DEFAULT_SENSITIVE_KEYS: readonly string[] = [
   "private_key",
   "pii_master_key",
   "piimasterkey",
+  "session_signing_key",
+  "sessionsigningkey",
 ];
 
 const REDACTED = "[REDACTED]";

@@ -41,6 +41,27 @@ const Schema = z.object({
   PII_MASTER_KEY: z
     .string()
     .regex(/^[0-9a-fA-F]{64}$/, "PII_MASTER_KEY must be 64 hex characters (32 bytes)"),
+
+  // ─── Session HMAC signing ──────────────────────────────────────────────
+  // 32 bytes = 64 hex chars, used by `lib/auth/session.ts` for HMAC sign/verify.
+  // INTENTIONALLY DECOUPLED from PII_MASTER_KEY: a leak of one key must not
+  // compromise the other (see `lib/auth/key.ts` doc comment for rationale).
+  SESSION_SIGNING_KEY: z
+    .string()
+    .regex(
+      /^[0-9a-fA-F]{64}$/,
+      "SESSION_SIGNING_KEY must be 64 hex characters (32 bytes)"
+    ),
+}).superRefine((data, ctx) => {
+  // Same-secret reuse defeats the whole point of having two keys.
+  if (data.SESSION_SIGNING_KEY === data.PII_MASTER_KEY) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["SESSION_SIGNING_KEY"],
+      message:
+        "SESSION_SIGNING_KEY must differ from PII_MASTER_KEY (do not reuse the same secret)",
+    });
+  }
 });
 
 export type AppConfig = {
@@ -55,6 +76,7 @@ export type AppConfig = {
   };
   databaseUrl: string;
   piiMasterKeyHex: string;
+  sessionSigningKeyHex: string;
 };
 
 let cached: AppConfig | undefined;
@@ -87,6 +109,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     },
     databaseUrl: v.DATABASE_URL,
     piiMasterKeyHex: v.PII_MASTER_KEY,
+    sessionSigningKeyHex: v.SESSION_SIGNING_KEY,
   };
   return cached;
 }

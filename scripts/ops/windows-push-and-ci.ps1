@@ -55,16 +55,44 @@ if ($Repo -match "bullvar|wisp|ISSCRMANALIZ") {
 }
 
 # 1. Repo root sanity.
+function Get-ShortSha([string]$ref) {
+  $sha = git rev-parse --short "$ref" 2>$null
+  if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($sha)) { return $sha }
+  return "(missing)"
+}
+
 Step "Repo root check" {
   if (-not (Test-Path ".git")) {
     throw "Not a git repo. Run: cd F:\GG\Projeler\crmanaliz"
   }
   $branch = git branch --show-current
   Write-Host "  branch     : $branch"
-  Write-Host "  HEAD       : $(git rev-parse --short HEAD)"
-  Write-Host "  main       : $(git rev-parse --short main)"
-  Write-Host "  v0.4.0     : $(git rev-parse --short v0.4.0^{commit})"
-  Write-Host "  v0.5.0     : $(git rev-parse --short v0.5.0^{commit})"
+  Write-Host "  HEAD       : $(Get-ShortSha 'HEAD')"
+  Write-Host "  main       : $(Get-ShortSha 'main')"
+  Write-Host "  v0.4.0     : $(Get-ShortSha 'v0.4.0^{commit}')"
+  Write-Host "  v0.5.0     : $(Get-ShortSha 'v0.5.0^{commit}')"
+}
+
+Step "Tag recovery (recreate v0.4.0 / v0.5.0 if missing)" {
+  $tags = @(
+    @{ Name = "v0.4.0"; Sha = "aa901f6"; Msg = "CRM Analiz M1-M4 production-ready engineering closure" }
+    @{ Name = "v0.5.0"; Sha = "1095761"; Msg = "CRM Analiz M5 operational hardening engineering closure" }
+  )
+  foreach ($t in $tags) {
+    $exists = git rev-parse "$($t.Name)^{commit}" 2>$null
+    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($exists)) {
+      Write-Host "  $($t.Name) missing - recreating from $($t.Sha)..." -ForegroundColor Yellow
+      $commit = git rev-parse "$($t.Sha)^{commit}" 2>$null
+      if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($commit)) {
+        throw "Cannot find commit $($t.Sha) for tag $($t.Name). Repo state corrupt."
+      }
+      git tag -a $t.Name $t.Sha -m $t.Msg
+      if ($LASTEXITCODE -ne 0) { throw "Failed to create tag $($t.Name)" }
+      Write-Host "  $($t.Name) recreated" -ForegroundColor Green
+    } else {
+      Write-Host "  $($t.Name) : OK"
+    }
+  }
 }
 
 # 2. gh auth.

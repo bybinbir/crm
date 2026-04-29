@@ -129,17 +129,21 @@ async function main(): Promise<void> {
   /* ─── audit events ──────────────────────────────────────────────────── */
   // Wipe + reseed so the suite has a known baseline of 10 events.
   await db.execute(sql`DELETE FROM audit_events WHERE kaynak LIKE '/e2e/%' OR kullanici_id LIKE 'e2e-%'`);
-  const actions: Array<{ aksiyon: string; sonuc: string; kaynak: string }> = [
-    { aksiyon: "login.success", sonuc: "ok", kaynak: "/e2e/login" },
-    { aksiyon: "login.fail", sonuc: "fail", kaynak: "/e2e/login" },
-    { aksiyon: "export_odenmemis_csv", sonuc: "ok", kaynak: "/e2e/export" },
-    { aksiyon: "export_odenmemis_xlsx", sonuc: "ok", kaynak: "/e2e/export" },
-    { aksiyon: "export_odenmemis_pdf", sonuc: "ok", kaynak: "/e2e/export" },
-    { aksiyon: "view.dashboard", sonuc: "ok", kaynak: "/e2e/dashboard" },
-    { aksiyon: "view.audit", sonuc: "ok", kaynak: "/e2e/audit" },
-    { aksiyon: "rbac.deny", sonuc: "fail", kaynak: "/e2e/rbac" },
-    { aksiyon: "session.refresh", sonuc: "ok", kaynak: "/e2e/session" },
-    { aksiyon: "logout", sonuc: "ok", kaynak: "/e2e/logout" },
+  // Schema constraint: audit_events.sonuc IN ('success','error') —
+  // see drizzle/0001_initial.sql. The seed used "ok"/"fail" originally,
+  // which violates the CHECK and aborts the seed before the e2e suite
+  // can boot.
+  const actions: Array<{ aksiyon: string; sonuc: "success" | "error"; kaynak: string }> = [
+    { aksiyon: "login.success", sonuc: "success", kaynak: "/e2e/login" },
+    { aksiyon: "login.fail", sonuc: "error", kaynak: "/e2e/login" },
+    { aksiyon: "export_odenmemis_csv", sonuc: "success", kaynak: "/e2e/export" },
+    { aksiyon: "export_odenmemis_xlsx", sonuc: "success", kaynak: "/e2e/export" },
+    { aksiyon: "export_odenmemis_pdf", sonuc: "success", kaynak: "/e2e/export" },
+    { aksiyon: "view.dashboard", sonuc: "success", kaynak: "/e2e/dashboard" },
+    { aksiyon: "view.audit", sonuc: "success", kaynak: "/e2e/audit" },
+    { aksiyon: "rbac.deny", sonuc: "error", kaynak: "/e2e/rbac" },
+    { aksiyon: "session.refresh", sonuc: "success", kaynak: "/e2e/session" },
+    { aksiyon: "logout", sonuc: "success", kaynak: "/e2e/logout" },
   ];
   for (const a of actions) {
     await db.insert(schema.auditEvents).values({

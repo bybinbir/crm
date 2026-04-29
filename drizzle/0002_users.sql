@@ -6,8 +6,9 @@
 -- Passwords are stored as scrypt hashes (lib/auth/password.ts).
 -- Role enum mirrors lib/auth/roles.ts; CHECK constraint guards against
 -- typo'd writes from raw SQL.
-
-BEGIN;
+--
+-- NOTE: No BEGIN/COMMIT — drizzle-kit migrate wraps each file in its
+-- own transaction. See 0001_initial.sql for the longer explanation.
 
 CREATE TABLE IF NOT EXISTS kullanicilar (
     id              BIGSERIAL PRIMARY KEY,
@@ -19,5 +20,3 @@ CREATE TABLE IF NOT EXISTS kullanicilar (
 );
 
 CREATE INDEX IF NOT EXISTS idx_kullanicilar_email ON kullanicilar (email);
-
-COMMIT;

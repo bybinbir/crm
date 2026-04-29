@@ -10,8 +10,13 @@
 --   * No FK from faturalar.abone_no → musteriler.abone_no with
 --     ON DELETE CASCADE — billing history must outlive customer rows.
 --     (RESTRICT is the safest posture for KVKK retention/audit.)
-
-BEGIN;
+--
+-- NOTE: Do NOT wrap this file in BEGIN/COMMIT — drizzle-kit's migrate
+-- runner already wraps each migration in its own transaction. Adding
+-- BEGIN here triggers PG WARNING 25001 "already in transaction", and
+-- the explicit COMMIT closes drizzle's wrapper transaction early so
+-- the journal row never lands and statements after it run outside
+-- any transaction (PG WARNING 25P01).
 
 -- ─── musteriler ─────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS musteriler (
@@ -85,5 +90,3 @@ CREATE TABLE IF NOT EXISTS audit_events (
 );
 
 CREATE INDEX IF NOT EXISTS idx_audit_ts ON audit_events (ts DESC);
-
-COMMIT;

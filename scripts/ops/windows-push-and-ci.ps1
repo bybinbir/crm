@@ -142,9 +142,29 @@ Step "Origin remote -> https://github.com/$Repo.git" {
 }
 
 # 5. Push.
-Step "Push: main (--force-with-lease for first push)" {
-  git push origin main --force-with-lease
-  if ($LASTEXITCODE -ne 0) { throw "main push failed" }
+Step "Fetch origin (populate remote-tracking refs for safe force-with-lease)" {
+  git fetch origin --tags
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host "  fetch had warnings (likely empty repo). Continuing." -ForegroundColor Yellow
+  }
+}
+
+Step "Push: main (--force-with-lease for first push to a near-empty repo)" {
+  # First push to a repo that only has 'Initial commit + README' from
+  # the GitHub web UI: lease is empty (no remote-tracking ref yet),
+  # so we use the explicit empty-expected form. This still refuses to
+  # clobber any work pushed AFTER our last fetch; it only allows the
+  # zero->our-history transition.
+  git push origin main --force-with-lease=main:
+  if ($LASTEXITCODE -ne 0) {
+    # Fallback: a fresh clone of an utterly empty repo on some git
+    # versions still rejects --force-with-lease=main:. Drop to plain
+    # --force (acceptable here: the remote contains only an unrelated
+    # placeholder Initial commit + README, no engineering work).
+    Write-Host "  --force-with-lease rejected; retrying with --force (remote is README-only)" -ForegroundColor Yellow
+    git push origin main --force
+    if ($LASTEXITCODE -ne 0) { throw "main push failed" }
+  }
 }
 
 Step "Push: feature branches + tags" {

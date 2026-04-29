@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   quality:
-    name: typecheck · lint · test
+    name: typecheck . lint . test
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -29,7 +29,7 @@ jobs:
         with: { version: 9.15.9 }
       - uses: actions/setup-node@v4
         with: { node-version: 20.18.0, cache: pnpm }
-      - run: pnpm install --frozen-lockfile --prod=false
+      - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm test
@@ -41,7 +41,12 @@ jobs:
     needs: quality
     timeout-minutes: 10
     env:
-      NODE_ENV: production
+      # NOTE: NODE_ENV is intentionally NOT set at job scope. With
+      # `pnpm install --frozen-lockfile` under NODE_ENV=production,
+      # devDependencies (typescript, @types/*, @tailwindcss/postcss)
+      # are skipped, breaking webpack's path-alias resolver and the
+      # PostCSS pipeline. We set NODE_ENV=production only on the
+      # build step below, after the install completes.
       LOG_LEVEL: info
       ISSMANAGER_BASE_URL: http://example.invalid/api
       ISSMANAGER_CLIENT_ID: iss_v2_ci_placeholder
@@ -55,8 +60,12 @@ jobs:
         with: { version: 9.15.9 }
       - uses: actions/setup-node@v4
         with: { node-version: 20.18.0, cache: pnpm }
-      - run: pnpm install --frozen-lockfile --prod=false
-      - run: pnpm build
+      - name: Install (with devDependencies)
+        run: pnpm install --frozen-lockfile
+      - name: Build
+        env:
+          NODE_ENV: production
+        run: pnpm build
 
   e2e:
     name: playwright e2e
@@ -77,7 +86,7 @@ jobs:
           --health-timeout 3s
           --health-retries 20
     env:
-      NODE_ENV: production
+      # Same fix as the build job: install needs devDependencies.
       LOG_LEVEL: info
       ISSMANAGER_BASE_URL: http://example.invalid/api
       ISSMANAGER_CLIENT_ID: iss_v2_ci_placeholder
@@ -93,16 +102,25 @@ jobs:
         with: { version: 9.15.9 }
       - uses: actions/setup-node@v4
         with: { node-version: 20.18.0, cache: pnpm }
-      - run: pnpm install --frozen-lockfile --prod=false
+      - name: Install (with devDependencies)
+        run: pnpm install --frozen-lockfile
       - name: Migrate test DB
+        env:
+          NODE_ENV: production
         run: pnpm db:migrate
       - name: Seed test DB (deterministic anon)
+        env:
+          NODE_ENV: development
         run: pnpm seed:e2e
       - name: Build
+        env:
+          NODE_ENV: production
         run: pnpm build
       - name: Install Playwright Chromium
         run: pnpm exec playwright install --with-deps chromium
       - name: Run e2e (Playwright auto-starts next start)
+        env:
+          NODE_ENV: production
         run: pnpm e2e
       - name: Upload Playwright report
         if: always()

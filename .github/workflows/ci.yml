@@ -96,6 +96,11 @@ jobs:
       SESSION_SIGNING_KEY: fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210
       E2E_PORT: "3100"
       E2E_BASE_URL: http://127.0.0.1:3100
+      # Playwright hits a production-mode build over plain HTTP. Without
+      # this, the session cookie has Secure=true (since NODE_ENV=production
+      # on the build/run steps) and the browser drops it silently — every
+      # login spec then hangs at waitForURL. Restricted to e2e job only.
+      AUTH_INSECURE_COOKIES: "true"
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

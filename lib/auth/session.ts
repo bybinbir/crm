@@ -65,11 +65,18 @@ export async function setSession(s: Omit<Session, "exp">): Promise<void> {
   const session: Session = { ...s, exp: Date.now() + SESSION_TTL_MS };
   const value = sign(session);
   const isProd = config.nodeEnv === "production";
+  // CI e2e runs a production-mode build behind plain HTTP (Playwright
+  // hits http://127.0.0.1:3100), so a Secure cookie would be silently
+  // dropped by the browser and the session would never persist. The
+  // suite then sees every login submit time out at waitForURL. Allow
+  // an explicit opt-out for that single context. Default OFF so real
+  // production keeps its Secure cookie.
+  const insecureOverride = process.env["AUTH_INSECURE_COOKIES"] === "true";
   const store = await cookies();
   store.set(COOKIE_NAME, value, {
     httpOnly: true,
     sameSite: "lax",
-    secure: isProd,
+    secure: isProd && !insecureOverride,
     path: "/",
     expires: new Date(session.exp),
   });
